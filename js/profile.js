@@ -170,13 +170,11 @@ export async function renderProfile(container, currentUser) {
         if (!confirm('Are you absolutely sure?\nThis will delete your profile data and sign you out.\n(Login credentials may persist until backend deletion).')) return;
 
         try {
-            // 1. Delete Profile Data (Soft Delete)
-            const { error } = await redJClient
-                .from('profiles')
-                .delete()
-                .eq('id', currentUser.id);
+            // 1. Delete Account (Auth + Data via RPC)
+            const { error } = await redJClient.rpc('delete_account');
 
-            if (error) console.error('Error deleting profile:', error);
+            if (error) throw error;
+
 
             // 2. Sign Out
             await redJClient.auth.signOut();
