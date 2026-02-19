@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedJGames - Authentic Gaming</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/games.css">
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <!-- Login View -->
+        <div id="login-view" class="auth-box glass-panel animate-in">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1>Red<span class="brand-highlight">J</span>Games</h1>
+                <p style="color: var(--text-secondary); margin-top: 10px;">Enter the arena</p>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label class="form-label">Email or Username</label>
+                    <input type="text" id="login-input" class="form-input" placeholder="user@example.com or Username"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Initialize Session</button>
+            </form>
+
+            <div class="auth-toggle">
+                New Player? <a href="#" id="show-register">Create Identity</a>
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <button id="guest-play-btn" class="btn btn-ghost" style="width: 100%;">
+                    <span>Enter as Guest</span>
+                    <span style="font-size: 0.7em; opacity: 0.7; margin-left: 8px;">(Daily Reset)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Register View -->
+        <div id="register-view" class="auth-box glass-panel animate-in hidden">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1>Red<span class="brand-highlight">J</span>Games</h1>
+                <p style="color: var(--text-secondary); margin-top: 10px;">Join the ranks</p>
+            </div>
+
+            <form id="register-form">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Choose Callsign</label>
+                    <input type="text" id="reg-username" class="form-input" placeholder="Min 3 characters" required
+                        minlength="3">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Secure Key</label>
+                    <input type="password" id="reg-password" class="form-input" placeholder="Min 6 characters" required
+                        minlength="6">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+
+            <div class="auth-toggle">
+                Already have credentials? <a href="#" id="show-login">Login</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/supabase-client.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+
+</html>
