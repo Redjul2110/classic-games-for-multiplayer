@@ -126,28 +126,46 @@ export async function renderGameHub(container, currentUser) {
 
 async function setupOnlineGame(type, container, currentUser) {
     showGameModeSelection(type.toUpperCase(),
-        (isPublic) => hostGame(type, isPublic, container, currentUser),
+        (isPublic, maxPlayers) => hostGame(type, isPublic, maxPlayers, container, currentUser),
         (joinMode) => joinGame(type, joinMode, container, currentUser)
     );
 }
 
-async function hostGame(type, isPublic, container, currentUser) {
-    const { data, error } = await onlineGamesClient
+async function hostGame(type, isPublic, maxPlayers, container, currentUser) {
+    // 1. Create Session
+    const { data: session, error } = await onlineGamesClient
         .from('game_sessions')
         .insert({
             host_id: currentUser.id,
             game_type: type,
             status: 'waiting',
-            is_public: isPublic
+            is_public: isPublic,
+            max_players: maxPlayers
         })
         .select()
         .single();
 
     if (error) {
         showModal('Error', error.message);
-    } else {
-        waitForOpponent(data, type, container, currentUser);
+        return;
     }
+
+    // 2. Initialize State (Player List)
+    const { error: stateError } = await onlineGamesClient
+        .from('game_states')
+        .insert({
+            session_id: session.id,
+            state_json: {
+                players: [{ id: currentUser.id, name: currentUser.user_metadata?.username || 'Host' }],
+                started: false
+            }
+        });
+
+    if (stateError) {
+        console.error('State Init Error:', stateError);
+    }
+
+    waitForOpponent(session, type, container, currentUser);
 }
 
 async function joinGame(type, joinMode, container, currentUser) {
@@ -172,66 +190,112 @@ async function joinGame(type, joinMode, container, currentUser) {
         gameId = joinMode; // logic from modal handled ID input
     }
 
-    // Attempt Join
-    const { error } = await onlineGamesClient
+    // For Party Mode, we just enter the lobby "waiting room"
+    // The Host will accept us via Broadcast and then switch status when they are ready.
+    // So we just load the waitForOpponent screen which now handles the handshake.
+
+    // Fetch session details first
+    const { data: session, error } = await onlineGamesClient
         .from('game_sessions')
-        .update({ status: 'playing' }) // In a full app, we'd add guest_id here too
-        .eq('id', gameId);
+        .select('*')
+        .eq('id', gameId)
+        .single();
 
     if (error) {
-        showModal('Error', 'Could not join game: ' + error.message);
-    } else {
-        // Broadcast arrival! This fixes the host waiting issue.
-        const channel = onlineGamesClient.channel(`game_updates:${gameId}`);
-        channel.subscribe(async (status) => {
-            if (status === 'SUBSCRIBED') {
-                await channel.send({
-                    type: 'broadcast',
-                    event: 'player-joined',
-                    payload: { id: currentUser.id }
-                });
-
-                // Launch
-                const { data: session } = await onlineGamesClient.from('game_sessions').select('*').eq('id', gameId).single();
-                launchOnlineGame(type, container, session, currentUser);
-            }
-        });
+        showModal('Error', 'Game not found.');
+        return;
     }
+
+    waitForOpponent(session, type, container, currentUser);
 }
 
 function waitForOpponent(session, type, container, currentUser) {
-    // Show waiting UI
-    container.innerHTML = `
-        <div class="glass-panel" style="text-align:center; max-width: 500px; margin: 0 auto;">
-            <h2>Waiting for opponent...</h2>
-            <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
-            <p>Game ID: <span style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; user-select: all;">${session.id}</span></p>
-            ${session.is_public ? '<p style="color: #44ff44; font-size: 0.8rem;">Public Lobby - Visible to others</p>' : '<p style="color: #ffaa44; font-size: 0.8rem;">Private Lobby - Share ID</p>'}
-            <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 20px;">Cancel</button>
-        </div>
-        <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-    `;
+    const isHost = session.host_id === currentUser.id;
+    let players = [{ id: session.host_id, name: 'Host' }]; // Local cache, updated via broadcast/state
 
-    // Subscribe to BOTH DB updates (backup) and Broadcast events (fast)
+    const renderLobby = () => {
+        container.innerHTML = `
+            <div class="glass-panel" style="text-align:center; max-width: 600px; margin: 0 auto;">
+                <h2>Lobby (${players.length}/${session.max_players})</h2>
+                <div class="loader" style="border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto;"></div>
+                
+                <p>Game ID: <span style="font-family: monospace; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; user-select: all;">${session.id}</span></p>
+                ${session.is_public ? '<p style="color: #44ff44; font-size: 0.8rem;">Public Lobby</p>' : '<p style="color: #ffaa44; font-size: 0.8rem;">Private Lobby</p>'}
+
+                <div style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                    <h4 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Players:</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        ${players.map(p => `<li style="padding: 5px 0;">👤 ${p.name || 'Player'} ${p.id === session.host_id ? '(Host)' : ''}</li>`).join('')}
+                    </ul>
+                </div>
+
+                ${isHost ?
+                `<button id="start-game-btn" class="btn btn-primary" ${players.length >= 2 ? '' : 'disabled'}>Start Game</button>`
+                : '<p>Waiting for Host to start...</p>'
+            }
+                <button class="btn btn-secondary" onclick="location.reload()" style="margin-top: 10px;">Leave</button>
+            </div>
+            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        `;
+
+        // Attach Start Listener
+        const startBtn = document.getElementById('start-game-btn');
+        if (startBtn) {
+            startBtn.onclick = async () => {
+                await onlineGamesClient.from('game_sessions').update({ status: 'playing' }).eq('id', session.id);
+                channel.send({ type: 'broadcast', event: 'game-start', payload: { players } });
+                launch(session);
+            };
+        }
+    };
+
+    renderLobby();
+
     const channel = onlineGamesClient.channel(`game_updates:${session.id}`);
 
     const launch = (updatedSession) => {
-        showToast('Opponent found! Starting...');
+        showToast('Game Starting!');
         channel.unsubscribe();
-        launchOnlineGame(type, container, updatedSession || session, currentUser);
+        // Pass the player list to the game
+        const finalSession = { ...updatedSession, players };
+        launchOnlineGame(type, container, finalSession, currentUser);
     };
 
     channel
-        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'game_sessions', filter: `id=eq.${session.id}` }, (payload) => {
-            if (payload.new.status === 'playing') {
-                launch(payload.new);
+        .on('broadcast', { event: 'player-join-req' }, async ({ payload }) => {
+            if (isHost) {
+                // Host validates and adds player
+                if (players.length < session.max_players && !players.find(p => p.id === payload.id)) {
+                    players.push(payload);
+                    renderLobby();
+
+                    // Sync everyone
+                    channel.send({ type: 'broadcast', event: 'lobby-update', payload: { players } });
+
+                    // Update DB state (Backup)
+                    await onlineGamesClient.from('game_states').update({ state_json: { players } }).eq('session_id', session.id);
+                }
             }
         })
-        .on('broadcast', { event: 'player-joined' }, () => {
-            console.log('Player joined evt received');
-            launch();
+        .on('broadcast', { event: 'lobby-update' }, ({ payload }) => {
+            // Clients receive update
+            players = payload.players;
+            renderLobby();
         })
-        .subscribe();
+        .on('broadcast', { event: 'game-start' }, ({ payload }) => {
+            players = payload.players;
+            launch(session);
+        })
+        .subscribe(async (status) => {
+            if (status === 'SUBSCRIBED' && !isHost) {
+                // Guest: Request to join
+                channel.send({
+                    type: 'broadcast',
+                    event: 'player-join-req',
+                    payload: { id: currentUser.id, name: currentUser.user_metadata?.username || 'Guest' }
+                });
+            }
+        });
 }
 
 function launchOnlineGame(type, container, session, currentUser) {

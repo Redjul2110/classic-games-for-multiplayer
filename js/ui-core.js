@@ -83,6 +83,11 @@ export function showToast(message, duration = 3000) {
 export function showGameModeSelection(gameName, onHost, onJoin) {
     const content = `
         <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div class="input-group" style="margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+                <label style="display: block; margin-bottom: 5px; color: var(--text-secondary); font-size: 0.9rem;">Player Count: <span id="player-count-val" style="color: white; font-weight: bold;">2</span></label>
+                <input type="range" id="player-count-slider" min="2" max="10" value="2" style="width: 100%; cursor: pointer;">
+            </div>
+
             <button class="mode-btn" id="btn-host-public">
                 <span class="icon">🌍</span>
                 <div>
@@ -119,8 +124,15 @@ export function showGameModeSelection(gameName, onHost, onJoin) {
 
     // Attach Listeners
     setTimeout(() => {
-        document.getElementById('btn-host-public').onclick = () => { closeModal(); onHost(true); };
-        document.getElementById('btn-host-private').onclick = () => { closeModal(); onHost(false); };
+        const slider = document.getElementById('player-count-slider');
+        const valDisplay = document.getElementById('player-count-val');
+
+        slider.oninput = (e) => {
+            valDisplay.textContent = e.target.value;
+        };
+
+        document.getElementById('btn-host-public').onclick = () => { closeModal(); onHost(true, parseInt(slider.value)); };
+        document.getElementById('btn-host-private').onclick = () => { closeModal(); onHost(false, parseInt(slider.value)); };
         document.getElementById('btn-join-random').onclick = () => { closeModal(); onJoin('random'); };
         document.getElementById('btn-join-id').onclick = () => {
             closeModal();

@@ -14,16 +14,28 @@ export class TicTacToe {
         this.mode = mode; // 'local' or 'online'
         this.session = session; // Supabase session object
         this.currentUser = currentUser;
-        this.board = Array(9).fill(null);
-        this.currentPlayer = PLAYER_X;
+
+        // Party Mode Settings
+        this.players = session?.players || [];
+        this.playerCount = this.players.length > 0 ? this.players.length : 2;
+
+        // Scale Board
+        this.gridSize = this.playerCount > 2 ? Math.max(10, this.playerCount * 3) : 3;
+        this.winCondition = this.playerCount > 2 ? 5 : 3;
+
+        this.board = Array(this.gridSize * this.gridSize).fill(null);
+        this.currentPlayerIdx = 0;
         this.gameActive = true;
+
+        // Symbols map
+        this.symbols = ['X', 'O', '△', '□', '☆', '◇', '♤', '♡', '♧', 'test'];
 
         // Determine player side if online
         if (this.mode === 'online') {
-            const isHost = this.session.host_id === this.currentUser.id;
-            this.mySide = isHost ? PLAYER_X : PLAYER_O;
+            this.myIndex = this.players.findIndex(p => p.id === this.currentUser.id);
+            if (this.myIndex === -1) this.myIndex = 0; // Fallback
         } else {
-            this.mySide = PLAYER_X; // Local play always starts as X
+            this.myIndex = 0;
         }
 
         this.initUI();
@@ -35,30 +47,35 @@ export class TicTacToe {
             this.channel = onlineGamesClient.channel(`game:${this.session.id}`);
 
             this.channel.on('broadcast', { event: 'move' }, ({ payload }) => {
-                this.makeMove(payload.index, payload.player, false); // false = don't broadcast back
+                this.makeMove(payload.index, payload.playerIdx, false);
             })
                 .subscribe();
         });
     }
 
     initUI() {
+        const cellSize = this.gridSize > 3 ? '40px' : '100px';
+        const fontSize = this.gridSize > 3 ? '1.5rem' : '3rem';
+
         this.container.innerHTML = `
-            <div class="glass-panel" style="max-width: 400px; margin: 0 auto; text-align: center;">
-                <h2 style="margin-bottom: 20px;">Tic-Tac-Toe</h2>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 1.1rem;">
-                    <span id="player-x-score" style="color: var(--accent-red); font-weight: bold;">
-                        ${this.mode === 'online' && this.mySide === PLAYER_O ? 'Opponent (X)' : 'You (X)'}
-                    </span>
+            <div class="glass-panel" style="max-width: ${this.gridSize > 3 ? '800px' : '400px'}; margin: 0 auto; text-align: center;">
+                <h2 style="margin-bottom: 20px;">Tic-Tac-Toe ${this.playerCount > 2 ? '(Party Mode)' : ''}</h2>
+                <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-size: 1.1rem;">
                     <span id="game-status" style="color: var(--text-secondary);">Waiting...</span>
-                    <span id="player-o-score" style="color: white;">
-                         ${this.mode === 'online' && this.mySide === PLAYER_X ? 'Opponent (O)' : 'AI (O)'}
-                    </span>
                 </div>
                 
-                <div class="ttt-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
-                    ${Array(9).fill(0).map((_, i) => `
+                <div class="ttt-grid" style="
+                    display: grid; 
+                    grid-template-columns: repeat(${this.gridSize}, 1fr); 
+                    gap: 5px; 
+                    margin-bottom: 20px;
+                    width: fit-content;
+                    margin-left: auto;
+                    margin-right: auto;
+                ">
+                    ${Array(this.board.length).fill(0).map((_, i) => `
                         <div class="ttt-cell glass-panel" data-index="${i}" 
-                             style="height: 100px; display: flex; align-items: center; justify-content: center; font-size: 3rem; cursor: pointer; transition: all 0.2s;">
+                             style="width: ${cellSize}; height: ${cellSize}; display: flex; align-items: center; justify-content: center; font-size: ${fontSize}; cursor: pointer; transition: all 0.2s;">
                         </div>
                     `).join('')}
                 </div>
@@ -74,7 +91,7 @@ export class TicTacToe {
 
         // Attach Listeners
         this.container.querySelectorAll('.ttt-cell').forEach(cell => {
-            cell.addEventListener('click', () => this.handleCellClick(cell.dataset.index));
+            cell.addEventListener('click', () => this.handleCellClick(parseInt(cell.dataset.index)));
         });
 
         if (this.mode === 'local') {
@@ -87,32 +104,32 @@ export class TicTacToe {
         if (!this.gameActive || this.board[index]) return;
 
         // Online Check: Is it my turn?
-        if (this.mode === 'online' && this.currentPlayer !== this.mySide) {
+        if (this.mode === 'online' && this.currentPlayerIdx !== this.myIndex) {
             return;
         }
 
-        this.makeMove(index, this.currentPlayer, true); // true = broadcast
+        this.makeMove(index, this.currentPlayerIdx, true); // true = broadcast
 
-        if (this.gameActive && this.mode === 'local' && this.currentPlayer === PLAYER_O) {
-            // AI Turn
+        if (this.gameActive && this.mode === 'local' && this.currentPlayerIdx === 1) {
+            // AI Turn (Only works for 2 player local for now)
             setTimeout(() => this.makeAIMove(), 500);
         }
     }
 
-    makeMove(index, player, shouldBroadcast) {
-        this.board[index] = player;
-        this.updateBoardUI(index, player);
+    makeMove(index, playerIdx, shouldBroadcast) {
+        this.board[index] = playerIdx;
+        this.updateBoardUI(index, playerIdx);
 
         if (shouldBroadcast && this.mode === 'online') {
             this.channel.send({
                 type: 'broadcast',
                 event: 'move',
-                payload: { index, player }
+                payload: { index, playerIdx }
             });
         }
 
-        if (this.checkWin(player)) {
-            this.endGame(player);
+        if (this.checkWin(playerIdx)) {
+            this.endGame(playerIdx);
         } else if (this.checkDraw()) {
             this.endGame('draw');
         } else {
@@ -121,33 +138,76 @@ export class TicTacToe {
     }
 
     switchTurn() {
-        this.currentPlayer = this.currentPlayer === PLAYER_X ? PLAYER_O : PLAYER_X;
+        this.currentPlayerIdx = (this.currentPlayerIdx + 1) % this.playerCount;
         this.updateStatus();
     }
 
     updateStatus() {
         const statusEl = this.container.querySelector('#game-status');
-        if (this.mode === 'local') {
-            statusEl.textContent = this.currentPlayer === PLAYER_X ? "Your Turn" : "AI Thinking...";
+        const symbol = this.symbols[this.currentPlayerIdx];
+
+        let text = "";
+        if (this.mode === 'online') {
+            text = this.currentPlayerIdx === this.myIndex ? "Your Turn" : `Player ${this.currentPlayerIdx + 1}'s Turn`;
         } else {
-            statusEl.textContent = this.currentPlayer === this.mySide ? "Your Turn" : "Opponent's Turn";
+            text = `Player ${this.currentPlayerIdx + 1} (${symbol}) Turn`;
         }
+        statusEl.textContent = text;
+        statusEl.style.color = 'white';
     }
 
-    updateBoardUI(index, player) {
+    updateBoardUI(index, playerIdx) {
         const cell = this.container.querySelector(`.ttt-cell[data-index="${index}"]`);
-        cell.textContent = player;
-        cell.style.color = player === PLAYER_X ? 'var(--accent-red)' : 'white';
-        // Simple pop animation
+        const symbol = this.symbols[playerIdx];
+        cell.textContent = symbol;
+        cell.style.color = ['var(--accent-red)', '#44ff44', '#4444ff', '#ffff44'][playerIdx % 4];
         cell.style.transform = 'scale(1.1)';
         setTimeout(() => cell.style.transform = 'scale(1)', 200);
     }
 
-    // --- Win Logic ---
-    checkWin(player) {
-        return WINNING_COMBOS.some(combo => {
-            return combo.every(index => this.board[index] === player);
-        });
+    // --- Win Logic (Standard + Gomoku style for large grids) ---
+    checkWin(playerIdx) {
+        const size = this.gridSize;
+        const req = this.winCondition;
+        const b = this.board;
+
+        // Helper to check direction
+        const checkDir = (startIdx, step) => {
+            let count = 0;
+            for (let i = 0; i < req; i++) {
+                const idx = startIdx + (i * step);
+                if (idx < 0 || idx >= b.length) return false;
+
+                // Wrap check for rows
+                if (step === 1 || step === size + 1 || step === size - 1) {
+                    // Simple bounds check logic is complex for 1D array representing 2D
+                    // Let's use (r,c) coordinates for safety
+                    const r = Math.floor(idx / size);
+                    const c = idx % size;
+                    const startR = Math.floor(startIdx / size);
+                    const startC = startIdx % size;
+
+                    // If we wrapped rows improperly, fail
+                    if (Math.abs(r - startR) !== Math.abs(c - startC) && step !== 1 && step !== size) return false; // Diagonal check fail
+                    if (r !== startR && step === 1) return false; // Horizontal wrap fail
+                }
+
+                if (b[idx] === playerIdx) count++;
+                else break;
+            }
+            return count === req;
+        };
+
+        for (let i = 0; i < b.length; i++) {
+            if (b[i] !== playerIdx) continue;
+
+            // Check E, S, SE, SW
+            if (checkDir(i, 1)) return true; // Horizontal
+            if (checkDir(i, size)) return true; // Vertical
+            if (checkDir(i, size + 1)) return true; // Diagonal \
+            if (checkDir(i, size - 1)) return true; // Diagonal /
+        }
+        return false;
     }
 
     checkDraw() {
@@ -160,19 +220,16 @@ export class TicTacToe {
 
         if (winner === 'draw') {
             statusEl.textContent = "It's a Draw!";
-            statusEl.style.color = 'var(--text-secondary)';
         } else {
-            statusEl.innerHTML = winner === PLAYER_X ?
-                '<span style="color: var(--accent-red);">You Win!</span>' :
-                '<span style="color: white;">AI Wins!</span>';
+            statusEl.innerHTML = `<span style="color: #44ff44;">Player ${winner + 1} Wins!</span>`;
         }
 
         this.container.querySelector('#game-controls').classList.remove('hidden');
     }
 
     restartGame() {
-        this.board = Array(9).fill(null);
-        this.currentPlayer = PLAYER_X;
+        this.board = Array(this.gridSize * this.gridSize).fill(null);
+        this.currentPlayerIdx = 0;
         this.gameActive = true;
         this.container.querySelectorAll('.ttt-cell').forEach(cell => {
             cell.textContent = '';
@@ -180,23 +237,14 @@ export class TicTacToe {
         });
         this.container.querySelector('#game-controls').classList.add('hidden');
         this.updateStatus();
-        this.container.querySelector('#game-status').style.color = 'var(--text-secondary)';
     }
 
-    // --- Minimax AI ---
+    // --- Simple AI (Random) ---
     makeAIMove() {
-        const bestMove = this.getBestMove();
-        this.makeMove(bestMove, PLAYER_O);
-    }
-
-    getBestMove() {
-        // Simple logic first: 1. Win, 2. Block, 3. Random
-        // For simplicity in this iteration, using random empty spot or center
-        const emptyIndices = this.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
-
-        if (this.board[4] === null) return 4; // Take center
-
-        // Random
-        return emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        const empty = this.board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+        if (empty.length > 0) {
+            const move = empty[Math.floor(Math.random() * empty.length)];
+            this.makeMove(move, 1, false);
+        }
     }
 }
