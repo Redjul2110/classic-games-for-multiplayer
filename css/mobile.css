@@ -1,0 +1,84 @@
+/* Mobile Optimization */
+@media (max-width: 768px) {
+
+    /* 1. Switch Layout to Single Column */
+    .app-layout {
+        grid-template-columns: 1fr;
+        padding-bottom: 70px;
+        /* Space for bottom nav */
+    }
+
+    /* 2. Move Sidebar to Bottom Nav */
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        justify-content: space-around;
+        padding: 10px;
+        background: rgba(0, 0, 0, 0.95);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        border-right: none;
+        z-index: 1000;
+    }
+
+    .sidebar-brand {
+        display: none;
+        /* Hide logo on mobile nav */
+    }
+
+    .user-profile-mini {
+        display: none;
+        /* Hide mini profile, access via nav instead */
+    }
+
+    .nav-item {
+        flex-direction: column;
+        padding: 8px;
+        font-size: 0.7rem;
+        text-align: center;
+        margin-bottom: 0;
+        border-radius: 8px;
+    }
+
+    .nav-item span {
+        display: none;
+        /* Optional: Hide text if icons are enough, or keep small */
+    }
+
+    .nav-item.active {
+        border-left: none;
+        border-bottom: 3px solid var(--accent-red);
+        border-radius: 8px;
+    }
+
+    /* 3. Adjust Main Content */
+    .main-content {
+        padding: 15px;
+        padding-bottom: 80px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    /* 4. Game Hub Grid */
+    .hub-grid {
+        grid-template-columns: 1fr;
+        /* Stack cards */
+    }
+
+    /* 5. Neon Cards (Uno) Scaling */
+    .uno-card {
+        width: 60px;
+        height: 90px;
+        font-size: 1.5rem;
+        border-width: 2px;
+    }
+
+    .uno-card:hover {
+        transform: translateY(-10px) scale(1.05);
+    }
+}

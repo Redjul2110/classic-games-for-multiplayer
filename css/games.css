@@ -1,4 +1,4 @@
-/* Uno Styles */
+/* Neon Cards Styles */
 .uno-container {
     perspective: 1000px;
 }
@@ -29,24 +29,24 @@
     z-index: 10;
 }
 
-.uno-card.red {
-    background: linear-gradient(135deg, #ff5555 0%, #cc0000 100%);
+.uno-card.pink {
+    background: linear-gradient(135deg, #ff66cc 0%, #aa0066 100%);
 }
 
-.uno-card.blue {
-    background: linear-gradient(135deg, #5555ff 0%, #0000cc 100%);
+.uno-card.cyan {
+    background: linear-gradient(135deg, #00ccff 0%, #0066aa 100%);
 }
 
-.uno-card.green {
-    background: linear-gradient(135deg, #55aa55 0%, #008800 100%);
+.uno-card.lime {
+    background: linear-gradient(135deg, #ccff00 0%, #66aa00 100%);
 }
 
-.uno-card.yellow {
-    background: linear-gradient(135deg, #ffcc00 0%, #d4a000 100%);
+.uno-card.purple {
+    background: linear-gradient(135deg, #cc66ff 0%, #6600aa 100%);
 }
 
 .uno-card.wild {
-    background: conic-gradient(#ff5555, #5555ff, #55aa55, #ffcc00);
+    background: conic-gradient(#ff66cc, #00ccff, #ccff00, #cc66ff);
 }
 
 .uno-card.back {

@@ -1,9 +1,9 @@
 
-const COLORS = ['red', 'blue', 'green', 'yellow'];
+const COLORS = ['pink', 'cyan', 'lime', 'purple'];
 const TYPES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', 'draw2'];
 const WILDS = ['wild', 'wild4'];
 
-export class Uno {
+export class NeonCards {
     constructor(container, mode = 'local', session = null, currentUser = null) {
         this.container = container;
         this.mode = mode;
@@ -217,10 +217,10 @@ export class Uno {
 
     getColorCode(color) {
         // Obsolete with CSS classes but kept for fallback or Status text
-        if (color === 'red') return '#ff5555';
-        if (color === 'blue') return '#5555ff';
-        if (color === 'green') return '#55aa55';
-        if (color === 'yellow') return '#aaaa00';
+        if (color === 'pink') return '#ff66cc';
+        if (color === 'cyan') return '#00ccff';
+        if (color === 'lime') return '#ccff00';
+        if (color === 'purple') return '#cc66ff';
         return '#444';
     }
 
@@ -273,7 +273,7 @@ export class Uno {
 
         // Wild
         if (card.color === 'wild') {
-            this.activeColor = 'red'; // Simplification: auto-red for rapid play
+            this.activeColor = 'pink'; // Simplification: auto-pink for rapid play
         } else {
             this.activeColor = card.color;
         }

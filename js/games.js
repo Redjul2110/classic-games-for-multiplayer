@@ -43,15 +43,15 @@ export async function renderGameHub(container, currentUser) {
 
                 <!-- Uno -->
                 <div class="game-card glass-panel">
-                    <div class="game-card-bg" style="background-image: linear-gradient(45deg, #FFFF00, #FF0000);"></div>
+                    <div class="game-card-bg" style="background-image: linear-gradient(45deg, #ff66cc, #00ccff);"></div>
                     <div class="game-card-content">
-                        <h3>Uno</h3>
+                        <h3>Neon Cards</h3>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
-                            Card matching fun.
+                            Cyberpunk card matching.
                         </p>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-primary" id="play-uno-local" style="font-size: 0.8rem; padding: 8px 16px;">VS AI</button>
-                            <button class="btn btn-ghost" id="play-uno-online" style="font-size: 0.8rem; padding: 8px 16px;">Online</button>
+                            <button class="btn btn-primary" id="play-neon-local" style="font-size: 0.8rem; padding: 8px 16px;">VS AI</button>
+                            <button class="btn btn-ghost" id="play-neon-online" style="font-size: 0.8rem; padding: 8px 16px;">Online</button>
                         </div>
                     </div>
                 </div>
@@ -103,8 +103,8 @@ export async function renderGameHub(container, currentUser) {
         import('./connect4.js').then(m => new m.Connect4(container, 'local'));
     });
 
-    document.getElementById('play-uno-local').addEventListener('click', () => {
-        import('./uno.js').then(m => new m.Uno(container, 'local'));
+    document.getElementById('play-neon-local').addEventListener('click', () => {
+        import('./neon_cards.js').then(m => new m.NeonCards(container, 'local'));
     });
 
     document.getElementById('play-ludo-local').addEventListener('click', () => {
@@ -119,7 +119,7 @@ export async function renderGameHub(container, currentUser) {
 
     bindOnline('play-ttt-online', 'tictactoe');
     bindOnline('play-c4-online', 'connect4');
-    bindOnline('play-uno-online', 'uno');
+    bindOnline('play-neon-online', 'neon_cards');
     bindOnline('play-ludo-online', 'ludo');
     bindOnline('play-checkers-online', 'checkers');
 }
@@ -303,8 +303,8 @@ function launchOnlineGame(type, container, session, currentUser) {
         import('./tictactoe.js').then(m => new m.TicTacToe(container, 'online', session, currentUser));
     } else if (type === 'connect4') {
         import('./connect4.js').then(m => new m.Connect4(container, 'online', session, currentUser));
-    } else if (type === 'uno') {
-        import('./uno.js').then(m => new m.Uno(container, 'online', session, currentUser));
+    } else if (type === 'neon_cards') {
+        import('./neon_cards.js').then(m => new m.NeonCards(container, 'online', session, currentUser));
     } else if (type === 'ludo') {
         import('./ludo.js').then(m => new m.Ludo(container, 'online', session, currentUser));
     } else if (type === 'checkers') {

@@ -1,4 +1,5 @@
 import { redJClient } from './supabase-client.js';
+import { clearGuestSession } from './guest.js';
 
 const DOMAIN = 'redjgames.local';
 
@@ -22,6 +23,7 @@ export async function signUp(username, email, password) {
     });
 
     if (error) throw error;
+    clearGuestSession();
     return data;
 }
 
@@ -40,6 +42,7 @@ export async function signIn(emailOrUsername, password) {
     });
 
     if (error) throw error;
+    clearGuestSession();
     return data;
 }
 
