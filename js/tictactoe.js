@@ -1,3 +1,4 @@
+import { cleanupAndExit } from './games.js';
 
 // Game Constants
 const PLAYER_X = 'X'; // Human
@@ -97,7 +98,10 @@ export class TicTacToe {
         if (this.mode === 'local') {
             this.container.querySelector('#restart-btn').addEventListener('click', () => this.restartGame());
         }
-        this.container.querySelector('#exit-btn').addEventListener('click', () => location.reload());
+        this.container.querySelector('#exit-btn').addEventListener('click', () => {
+            if (this.mode === 'online') cleanupAndExit(this.session, this.currentUser);
+            else location.reload();
+        });
     }
 
     handleCellClick(index) {

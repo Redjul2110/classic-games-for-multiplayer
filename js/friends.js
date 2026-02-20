@@ -1,4 +1,5 @@
 import { redJClient } from './supabase-client.js';
+import { showToast, showModal } from './ui-core.js';
 
 export async function renderFriends(container, currentUser) {
     container.innerHTML = `
@@ -136,12 +137,12 @@ async function addFriend(targetUsername, currentUser) {
         .single();
 
     if (error || !targetUser) {
-        alert('User not found.');
+        showToast('User not found.');
         return;
     }
 
     if (targetUser.id === currentUser.id) {
-        alert("You can't befriend yourself (sadly).");
+        showToast("You can't befriend yourself (sadly).");
         return;
     }
 
@@ -156,12 +157,12 @@ async function addFriend(targetUsername, currentUser) {
 
     if (insertError) {
         if (insertError.code === '23505') { // Unique violation
-            alert('Friend request already sent or exists.');
+            showToast('Friend request already sent or exists.');
         } else {
-            alert('Error sending request: ' + insertError.message);
+            showModal('Error', 'Error sending request: ' + insertError.message);
         }
     } else {
-        alert('Friend request sent!');
+        showToast('Friend request sent!');
         document.getElementById('add-friend-input').value = '';
     }
 }

@@ -1,3 +1,4 @@
+import { cleanupAndExit } from './games.js';
 
 const ROWS = 6;
 const COLS = 7;
@@ -71,7 +72,10 @@ export class Connect4 {
         if (this.mode === 'local') {
             this.container.querySelector('#restart-btn').addEventListener('click', () => this.restartGame());
         }
-        this.container.querySelector('#exit-btn').addEventListener('click', () => location.reload());
+        this.container.querySelector('#exit-btn').addEventListener('click', () => {
+            if (this.mode === 'online') cleanupAndExit(this.session, this.currentUser);
+            else location.reload();
+        });
     }
 
     getLabel(player) {

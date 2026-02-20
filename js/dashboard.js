@@ -1,6 +1,7 @@
 import { redJClient } from './supabase-client.js';
 import { signOut } from './auth.js';
 import { isGuest, getGuestId, clearGuestSession } from './guest.js';
+import { showModal } from './ui-core.js';
 
 // DOM Elements
 const userNameEl = document.getElementById('user-name');
@@ -62,6 +63,15 @@ function renderGuestProfile() {
 }
 
 function setupNavigation() {
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+    }
+
     navItems.forEach(item => {
         item.addEventListener('click', (e) => {
             e.preventDefault();
@@ -69,21 +79,31 @@ function setupNavigation() {
             navItems.forEach(n => n.classList.remove('active'));
             item.classList.add('active');
 
+            // Close mobile menu if open
+            if (sidebar.classList.contains('open')) {
+                sidebar.classList.remove('open');
+            }
+
             // Load Content
             const tab = item.getAttribute('data-tab');
             loadTabContent(tab);
         });
     });
 
-    logoutBtn.addEventListener('click', async () => {
-        if (confirm('Are you sure you want to logout?')) {
-            if (currentUser.isGuest) {
-                clearGuestSession();
-                window.location.href = 'index.html';
-            } else {
-                await signOut();
-            }
-        }
+    logoutBtn.addEventListener('click', () => {
+        showModal('Logout', 'Are you sure you want to end your session?', [
+            {
+                text: 'Logout', class: 'btn-primary', onClick: async () => {
+                    if (currentUser.isGuest) {
+                        clearGuestSession();
+                        window.location.href = 'index.html';
+                    } else {
+                        await signOut();
+                    }
+                }
+            },
+            { text: 'Cancel', class: 'btn-secondary' }
+        ]);
     });
 }
 

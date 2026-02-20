@@ -1,3 +1,4 @@
+import { cleanupAndExit } from './games.js';
 
 const RED = 'red';   // Player (Bottom)
 const WHITE = 'white'; // AI (Top)
@@ -87,7 +88,10 @@ export class Checkers {
         this.updateBoard();
         this.updateStatus();
 
-        this.container.querySelector('#exit-btn').addEventListener('click', () => location.reload());
+        this.container.querySelector('#exit-btn').addEventListener('click', () => {
+            if (this.mode === 'online') cleanupAndExit(this.session, this.currentUser);
+            else location.reload();
+        });
     }
 
     updateBoard() {

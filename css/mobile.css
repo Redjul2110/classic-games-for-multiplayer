@@ -1,63 +1,76 @@
 /* Mobile Optimization */
 @media (max-width: 768px) {
-
-    /* 1. Switch Layout to Single Column */
     .app-layout {
-        grid-template-columns: 1fr;
-        padding-bottom: 70px;
-        /* Space for bottom nav */
+        display: flex;
+        flex-direction: column;
+        padding-bottom: 0;
     }
 
-    /* 2. Move Sidebar to Bottom Nav */
+    .mobile-header {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        background: rgba(20, 20, 20, 0.95);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        z-index: 1001;
+        backdrop-filter: blur(10px);
+    }
+
     .sidebar {
         position: fixed;
-        bottom: 0;
+        top: 0;
+        left: -100%;
+        width: 250px;
+        height: 100vh;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding: 20px;
+        background: rgba(15, 15, 15, 0.98);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        border-top: none;
+        z-index: 1005;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.8);
+    }
+
+    .sidebar.open {
         left: 0;
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        justify-content: space-around;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.95);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        border-right: none;
-        z-index: 1000;
     }
 
     .sidebar-brand {
-        display: none;
-        /* Hide logo on mobile nav */
+        display: block;
+        margin-bottom: 30px;
     }
 
     .user-profile-mini {
-        display: none;
-        /* Hide mini profile, access via nav instead */
+        display: flex;
+        margin-top: auto;
     }
 
     .nav-item {
-        flex-direction: column;
-        padding: 8px;
-        font-size: 0.7rem;
-        text-align: center;
-        margin-bottom: 0;
-        border-radius: 8px;
+        flex-direction: row;
+        padding: 12px 15px;
+        font-size: 1rem;
+        text-align: left;
+        margin-bottom: 5px;
     }
 
     .nav-item span {
-        display: none;
-        /* Optional: Hide text if icons are enough, or keep small */
+        display: inline-block;
+        margin-right: 15px;
     }
 
     .nav-item.active {
-        border-left: none;
-        border-bottom: 3px solid var(--accent-red);
-        border-radius: 8px;
+        border-left: 3px solid var(--accent-red);
+        border-bottom: none;
+        background: rgba(255, 255, 255, 0.05);
     }
 
     /* 3. Adjust Main Content */
     .main-content {
         padding: 15px;
-        padding-bottom: 80px;
+        flex: 1;
     }
 
     h1 {
@@ -70,7 +83,7 @@
         /* Stack cards */
     }
 
-    /* 5. Neon Cards (Uno) Scaling */
+    /* 5. Neon Cards Scaling */
     .uno-card {
         width: 60px;
         height: 90px;

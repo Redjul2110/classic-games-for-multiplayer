@@ -1,5 +1,6 @@
 import { signIn, signUp } from './auth.js';
 import { redJClient } from './supabase-client.js';
+import { showToast, showModal } from './ui-core.js';
 
 // DOM Elements
 const loginForm = document.getElementById('login-form');
@@ -47,7 +48,7 @@ loginForm.addEventListener('submit', async (e) => {
         await signIn(loginInput, password);
         window.location.href = 'dashboard.html';
     } catch (error) {
-        alert(error.message);
+        showModal('Login Failed', error.message);
         btn.textContent = 'Enter World';
         btn.disabled = false;
     }
@@ -69,7 +70,7 @@ registerForm.addEventListener('submit', async (e) => {
         // If auto-login is on (default), we are good.
         window.location.href = 'dashboard.html';
     } catch (error) {
-        alert(error.message);
+        showModal('Registration Failed', error.message);
         btn.textContent = 'Initialize Account';
         btn.disabled = false;
     }
@@ -82,8 +83,11 @@ guestBtn.addEventListener('click', () => {
     // We might generate a unique ID here or in the dashboard
     import('./guest.js').then(module => {
         const guestId = module.initGuestSession();
-        alert(`Entered as Guest: ${guestId}`); // Temporary feedback
-        window.location.href = 'dashboard.html';
+        // Use custom toast instead of alert
+        showToast(`Entered as Guest: ${guestId.split('_')[1] || guestId}`, 3000);
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1000); // Give user a moment to read it
     });
 });
 

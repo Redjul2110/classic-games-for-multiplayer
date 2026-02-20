@@ -1,4 +1,5 @@
 import { redJClient } from './supabase-client.js';
+import { showToast } from './ui-core.js';
 
 export async function renderChat(container, currentUser) {
     container.innerHTML = `
@@ -68,7 +69,7 @@ export async function renderChat(container, currentUser) {
                 });
 
             if (error) {
-                alert('Failed to send: ' + error.message);
+                showToast('Failed to send: ' + error.message);
                 input.value = text;
             }
         };

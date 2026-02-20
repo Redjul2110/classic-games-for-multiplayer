@@ -1,4 +1,5 @@
 import { redJClient } from './supabase-client.js';
+import { showToast, showModal } from './ui-core.js';
 
 export async function renderProfile(container, currentUser) {
     if (currentUser.isGuest) {
@@ -111,10 +112,10 @@ export async function renderProfile(container, currentUser) {
 
             if (authError) console.warn('Auth metadata sync failed:', authError);
 
-            alert('Profile updated successfully!');
+            showToast('Profile updated successfully!');
             location.reload(); // Refresh to show updates
         } catch (error) {
-            alert('Error updating profile: ' + error.message);
+            showModal('Error', 'Error updating profile: ' + error.message);
             btn.disabled = false;
             btn.textContent = 'Save Profile';
         }
@@ -133,9 +134,9 @@ export async function renderProfile(container, currentUser) {
         try {
             const { error } = await redJClient.auth.updateUser({ email: email });
             if (error) throw error;
-            alert('Confirmation link sent to ' + email + '. Please click it to verify.');
+            showToast('Confirmation link sent to ' + email + '. Please click it to verify.');
         } catch (error) {
-            alert('Error: ' + error.message);
+            showModal('Error', 'Error: ' + error.message);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Update';
@@ -155,10 +156,10 @@ export async function renderProfile(container, currentUser) {
         try {
             const { error } = await redJClient.auth.updateUser({ password: password });
             if (error) throw error;
-            alert('Password updated successfully.');
+            showToast('Password updated successfully.');
             document.getElementById('profile-password').value = '';
         } catch (error) {
-            alert('Error: ' + error.message);
+            showModal('Error', 'Error: ' + error.message);
         } finally {
             btn.disabled = false;
             btn.textContent = 'Update';
@@ -166,22 +167,22 @@ export async function renderProfile(container, currentUser) {
     });
 
     // Delete Account Handler
-    document.getElementById('delete-account-btn').addEventListener('click', async () => {
-        if (!confirm('Are you absolutely sure?\nThis will delete your profile data and sign you out.\n(Login credentials may persist until backend deletion).')) return;
-
-        try {
-            // 1. Delete Account (Auth + Data via RPC)
-            const { error } = await redJClient.rpc('delete_account');
-
-            if (error) throw error;
-
-
-            // 2. Sign Out
-            await redJClient.auth.signOut();
-            alert('Account data deleted. Goodbye Commander.');
-            window.location.href = 'index.html';
-        } catch (error) {
-            alert('Error deleting account: ' + error.message);
-        }
+    document.getElementById('delete-account-btn').addEventListener('click', () => {
+        showModal('Delete Account', 'Are you absolutely sure?<br>This will delete your profile data and sign you out.', [
+            {
+                text: 'Yes, Delete', class: 'btn-primary', onClick: async () => {
+                    try {
+                        const { error } = await redJClient.rpc('delete_account');
+                        if (error) throw error;
+                        await redJClient.auth.signOut();
+                        showToast('Account data deleted.');
+                        setTimeout(() => window.location.href = 'index.html', 1500);
+                    } catch (error) {
+                        showModal('Error', 'Error: ' + error.message);
+                    }
+                }
+            },
+            { text: 'Cancel', class: 'btn-secondary' }
+        ]);
     });
 }

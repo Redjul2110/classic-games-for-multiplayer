@@ -1,3 +1,4 @@
+import { cleanupAndExit } from './games.js';
 
 const COLORS = ['pink', 'cyan', 'lime', 'purple'];
 const TYPES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'skip', 'reverse', 'draw2'];
@@ -173,9 +174,7 @@ export class NeonCards {
                 </div>
                  
                 <div id="game-controls" class="hidden" style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center;">
-                    <h2 id="end-msg">Game Over</h2>
-                    <button class="btn btn-primary" onclick="location.reload()">Exit</button>
-                </div>
+                    <button id="exit-btn" class="btn btn-primary">Exit</button>
             </div>
         `;
 
@@ -183,6 +182,10 @@ export class NeonCards {
 
         // Listeners
         this.container.querySelector('#draw-pile').onclick = () => this.handleDraw();
+        this.container.querySelector('#exit-btn').onclick = () => {
+            if (this.mode === 'online') cleanupAndExit(this.session, this.currentUser);
+            else location.reload();
+        };
     }
 
     renderHand() {
