@@ -325,46 +325,118 @@ async function joinGame(type, joinMode, container, currentUser) {
     if (joinMode === 'random') {
         showModal('Matchmaking', '<div style="text-align:center"><div class="loader" style="margin:20px auto; border:4px solid rgba(255,255,255,0.1); border-top:4px solid var(--accent-red); border-radius:50%; width:40px; height:40px; animation:spin 1s linear infinite;"></div><p>Searching for active lobbies...</p></div>');
 
-        // Fetch all potential open games
-        const { data: openGames, error } = await onlineGamesClient
+        // Fetch all potential open games (public AND private, INCLUDING our own ghosts)
+        const { data: allGames, error } = await onlineGamesClient
             .from('game_sessions')
             .select('*')
             .eq('game_type', type)
-            .eq('status', 'waiting')
-            .eq('is_public', true)
-            .neq('host_id', currentUser.id);
+            .eq('status', 'waiting');
 
-        if (error || !openGames || openGames.length === 0) {
-            closeModal();
-            showModal('No Matches', 'No public games found right now. Try hosting one!');
-            return;
+        let deletedGhosts = 0;
+        let activeSessions = [];
+
+        if (allGames && allGames.length > 0) {
+            // Concurrent sweep to quickly process all possible lobbies at once
+            await Promise.all(allGames.map(async (session) => {
+                // Safeguard 3: Fast DB State Check
+                const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
+                let isGhostByDb = (!st || !st.state_json || !st.state_json.players || st.state_json.players.length === 0 || !st.state_json.players.find(p => p.id === session.host_id));
+
+                if (isGhostByDb) {
+                    await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: session.id });
+                    deletedGhosts++;
+                    return;
+                }
+
+                // Secondary Safeguard: Join channel briefly to check if ANY player answers
+                const isGhost = await new Promise((resolve) => {
+                    const checkChannel = onlineGamesClient.channel(`game:${session.id}`);
+                    let answered = false;
+
+                    checkChannel.on('broadcast', { event: 'ghost_ping_response' }, () => {
+                        answered = true;
+                    });
+
+                    checkChannel.subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            checkChannel.send({ type: 'broadcast', event: 'ghost_ping_request', payload: {} });
+
+                            setTimeout(() => {
+                                checkChannel.unsubscribe();
+                                resolve(!answered); // No answer = Ghost Lobby
+                            }, 1200);
+                        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                            resolve(true); // Treat as ghost if unreachable
+                        }
+                    });
+                });
+
+                if (isGhost) {
+                    // Delete ghost lobby via RPC to bypass RLS
+                    await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: session.id });
+                    deletedGhosts++;
+                } else {
+                    // Lobby is active. If it is public and it's NOT our own lobby, add it to candidates!
+                    if (session.is_public && session.host_id !== currentUser.id) {
+                        activeSessions.push(session.id);
+                    }
+                }
+            }));
+
+            if (activeSessions.length > 0) {
+                targetSessionId = activeSessions[0]; // Take the first active suitable one
+            }
         }
 
-        // Smart Join: Iterate and check DB 'last_ping'. If a lobby is a "ghost" (Host closed tab but DB didn't update), delete it.
-        for (const session of openGames) {
-            const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
-            if (st && st.state_json) {
-                const lastPing = st.state_json.last_ping || 0;
-                // If the ping is older than 10 seconds, it's a ghost lobby
-                if (Date.now() - lastPing > 10000) {
-                    await onlineGamesClient.from('game_sessions').delete().eq('id', session.id);
-                } else {
-                    targetSessionId = session.id;
-                    break; // found an active lobby
-                }
-            } else {
-                // Completely broken state
-                await onlineGamesClient.from('game_sessions').delete().eq('id', session.id);
-            }
+        if (deletedGhosts > 0) {
+            // Zeige kleines Popup (Toast) wie vom User gewünscht
+            setTimeout(() => showToast(`${deletedGhosts} Geisterlobby(s) entfernt.`), 500);
         }
 
         if (!targetSessionId) {
             closeModal();
-            showModal('No Matches', 'All active lobbies are unfortunately closed now. Try hosting one!');
+            showModal('Matchmaking', 'Es gibt aktuell leider keine aktiven Spieler. Erstelle am besten einfach selbst eine Lobby!');
             return;
         }
     } else {
         targetSessionId = joinMode;
+
+        // Direct Join: Fast DB State Check (Safeguard 3)
+        const { data: sessionData } = await onlineGamesClient.from('game_sessions').select('host_id').eq('id', targetSessionId).single();
+        const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', targetSessionId).single();
+        let isGhostByDb = (!sessionData || !st || !st.state_json || !st.state_json.players || st.state_json.players.length === 0 || !st.state_json.players.find(p => p.id === sessionData.host_id));
+
+        if (isGhostByDb) {
+            await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: targetSessionId });
+            closeModal();
+            showToast('Lobby war leer und wurde gelöscht.');
+            return;
+        }
+
+        // Direct Join Ghost Check (Active Realtime Ping)
+        const isGhost = await new Promise((resolve) => {
+            const checkChannel = onlineGamesClient.channel(`game:${targetSessionId}`);
+            let answered = false;
+            checkChannel.on('broadcast', { event: 'ghost_ping_response' }, () => { answered = true; });
+            checkChannel.subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    checkChannel.send({ type: 'broadcast', event: 'ghost_ping_request', payload: {} });
+                    setTimeout(() => {
+                        checkChannel.unsubscribe();
+                        resolve(!answered);
+                    }, 1200);
+                } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    resolve(true);
+                }
+            });
+        });
+
+        if (isGhost) {
+            await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: targetSessionId });
+            closeModal();
+            showToast('Lobby war leer und wurde gelöscht.');
+            return;
+        }
     }
 
     // Fetch session details directly
@@ -409,11 +481,23 @@ function waitForOpponent(session, type, container, currentUser) {
     let players = [];
     let pollingInterval = null;
 
+    // --- Active Ghost Lobby Responder ---
+    const ghostChannel = onlineGamesClient.channel(`game:${session.id}`);
+    ghostChannel.on('broadcast', { event: 'ghost_ping_request' }, () => {
+        ghostChannel.send({ type: 'broadcast', event: 'ghost_ping_response', payload: {} });
+    }).subscribe();
+
+    const cleanupGhostChannel = () => {
+        onlineGamesClient.removeChannel(ghostChannel);
+    };
+    // ------------------------------------
+
     // Fast tracking cleanup for host closing tab during matchmaking
     const unloadHandler = () => {
         if (isHost) {
             onlineGamesClient.from('game_sessions').delete().eq('id', session.id).then();
         }
+        cleanupGhostChannel();
     };
     window.addEventListener('beforeunload', unloadHandler);
 
@@ -471,6 +555,7 @@ function waitForOpponent(session, type, container, currentUser) {
                     }
                 }
                 clearInterval(pollingInterval);
+                cleanupGhostChannel();
                 location.reload();
             };
         }
@@ -491,6 +576,7 @@ function waitForOpponent(session, type, container, currentUser) {
                 }
 
                 clearInterval(pollingInterval);
+                cleanupGhostChannel();
                 launch(session);
             };
         }
@@ -501,6 +587,7 @@ function waitForOpponent(session, type, container, currentUser) {
         if (error) {
             // Session likely deleted by host
             clearInterval(pollingInterval);
+            cleanupGhostChannel();
             showModal('Lobby Closed', 'The host has ended the lobby.', [{ text: 'OK', class: 'btn-primary', onClick: () => location.reload() }]);
             return;
         }
@@ -516,6 +603,7 @@ function waitForOpponent(session, type, container, currentUser) {
                 const lastPing = data.state_json.last_ping || 0;
                 if (Date.now() - lastPing > 10000) {
                     clearInterval(pollingInterval);
+                    cleanupGhostChannel();
                     showModal('Lobby Closed', 'The host has disconnected. This lobby is no longer active.', [{ text: 'Leave', class: 'btn-primary', onClick: () => location.reload() }]);
                     return;
                 }
@@ -523,6 +611,7 @@ function waitForOpponent(session, type, container, currentUser) {
 
             if (!isHost && data.state_json.started) {
                 clearInterval(pollingInterval);
+                cleanupGhostChannel();
                 launch(session);
                 return;
             }
