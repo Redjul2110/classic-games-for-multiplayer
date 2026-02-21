@@ -1,28 +1,28 @@
 :root {
     /* Core Colors */
-    --bg-dark: #050505;
-    --bg-panel: rgba(20, 20, 20, 0.6);
+    --bg-dark: #07070a;
+    --bg-panel: rgba(15, 15, 18, 0.7);
     --text-primary: #ffffff;
-    --text-secondary: #a0a0a0;
-    --text-muted: #666666;
+    --text-secondary: #aaaaaa;
+    --text-muted: #777777;
 
     /* Brand Colors */
-    --accent-red: #ff3333;
-    --accent-red-dim: #cc0000;
-    --accent-gradient: linear-gradient(135deg, #ff0000 0%, #aa0000 100%);
+    --accent-red: #ff2a2a;
+    --accent-red-dim: #b30000;
+    --accent-gradient: linear-gradient(135deg, #ff2a2a 0%, #b30000 100%);
 
     /* Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.05);
-    --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --backdrop-blur: blur(12px);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --backdrop-blur: blur(20px);
 
     /* Motion */
     --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
     --transition-fast: 0.2s var(--ease-out-expo);
     --transition-medium: 0.4s var(--ease-out-expo);
 
-    --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-main: 'Outfit', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 * {
@@ -39,7 +39,7 @@ body {
     overflow-x: hidden;
     min-height: 100vh;
     /* Animated Background */
-    background: radial-gradient(circle at 10% 20%, #1a0000 0%, #000000 40%, #050505 100%);
+    background: radial-gradient(circle at 10% 20%, #150000 0%, #050000 50%, #07070a 100%);
     background-attachment: fixed;
 }
 
@@ -105,13 +105,13 @@ h1 {
 
 /* Glass Components */
 .glass-panel {
-    background: linear-gradient(145deg, rgba(30, 30, 30, 0.7), rgba(15, 15, 15, 0.9));
+    background: linear-gradient(145deg, rgba(25, 25, 28, 0.7), rgba(10, 10, 12, 0.9));
     backdrop-filter: var(--backdrop-blur);
     -webkit-backdrop-filter: var(--backdrop-blur);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 2.5rem;
     transition: transform var(--transition-medium), box-shadow var(--transition-medium), border-color var(--transition-medium);
 }
 
@@ -127,11 +127,11 @@ h1 {
     justify-content: center;
     align-items: center;
     padding: 12px 28px;
-    border-radius: 8px;
+    border-radius: 50px;
     font-weight: 600;
     font-size: 0.95rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     cursor: pointer;
     transition: all var(--transition-fast);
     text-decoration: none;
@@ -188,9 +188,9 @@ h1 {
 .form-input {
     width: 100%;
     padding: 16px;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
     color: white;
     font-size: 1rem;
     transition: all var(--transition-fast);

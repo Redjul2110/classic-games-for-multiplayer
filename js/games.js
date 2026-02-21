@@ -17,7 +17,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Tic-Tac-Toe</h3>
-                            <button class="btn btn-ghost help-btn" data-game="ttt" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="ttt" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                          <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             The classic game of X and O.
@@ -35,7 +35,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Connect 4</h3>
-                            <button class="btn btn-ghost help-btn" data-game="c4" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="c4" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Get 4 in a row. Gravity enabled.
@@ -53,7 +53,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Neon Cards</h3>
-                            <button class="btn btn-ghost help-btn" data-game="neon" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="neon" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Cyberpunk card matching.
@@ -71,7 +71,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Battleship</h3>
-                            <button class="btn btn-ghost help-btn" data-game="battleship" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="battleship" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Sink enemy ships.
@@ -89,7 +89,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Dots & Boxes</h3>
-                            <button class="btn btn-ghost help-btn" data-game="dots_boxes" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="dots_boxes" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Claim the most squares.
@@ -107,7 +107,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Memory</h3>
-                            <button class="btn btn-ghost help-btn" data-game="memory" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="memory" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Find matching pairs.
@@ -125,7 +125,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Hangman</h3>
-                            <button class="btn btn-ghost help-btn" data-game="hangman" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="hangman" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Guess the hidden word.
@@ -143,7 +143,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">R-P-S</h3>
-                            <button class="btn btn-ghost help-btn" data-game="rps" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="rps" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Rock Paper Scissors.
@@ -161,7 +161,7 @@ export async function renderGameHub(container, currentUser) {
                     <div class="game-card-content">
                         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
                             <h3 style="margin: 0;">Checkers</h3>
-                            <button class="btn btn-ghost help-btn" data-game="checkers" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play">❓</button>
+                            <button class="btn btn-ghost help-btn" data-game="checkers" style="padding: 2px 8px; font-size: 1.1rem;" title="How to play"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></button>
                         </div>
                         <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 0.9rem;">
                             Strategy board game.
@@ -336,48 +336,29 @@ async function joinGame(type, joinMode, container, currentUser) {
         let activeSessions = [];
 
         if (allGames && allGames.length > 0) {
-            // Concurrent sweep to quickly process all possible lobbies at once
+            // Concurrent Database Sweep (Fast select checks, no websockets)
+            // This guarantees ALL dead lobbies on the entire server are scanned and deleted every time matchmaking runs.
             await Promise.all(allGames.map(async (session) => {
-                // Safeguard 3: Fast DB State Check
                 const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
-                let isGhostByDb = (!st || !st.state_json || !st.state_json.players || st.state_json.players.length === 0 || !st.state_json.players.find(p => p.id === session.host_id));
+
+                let isGhostByDb = false;
+                if (!st || !st.state_json) {
+                    isGhostByDb = true;
+                } else {
+                    const players = st.state_json.players || [];
+                    const lastPing = st.state_json.last_ping || 0;
+
+                    if (players.length === 0 || !players.find(p => String(p.id) === String(session.host_id)) || (Date.now() - lastPing > 8000)) {
+                        isGhostByDb = true;
+                    }
+                }
 
                 if (isGhostByDb) {
                     await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: session.id });
                     deletedGhosts++;
-                    return;
-                }
-
-                // Secondary Safeguard: Join channel briefly to check if ANY player answers
-                const isGhost = await new Promise((resolve) => {
-                    const checkChannel = onlineGamesClient.channel(`game:${session.id}`);
-                    let answered = false;
-
-                    checkChannel.on('broadcast', { event: 'ghost_ping_response' }, () => {
-                        answered = true;
-                    });
-
-                    checkChannel.subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            checkChannel.send({ type: 'broadcast', event: 'ghost_ping_request', payload: {} });
-
-                            setTimeout(() => {
-                                checkChannel.unsubscribe();
-                                resolve(!answered); // No answer = Ghost Lobby
-                            }, 1200);
-                        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                            resolve(true); // Treat as ghost if unreachable
-                        }
-                    });
-                });
-
-                if (isGhost) {
-                    // Delete ghost lobby via RPC to bypass RLS
-                    await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: session.id });
-                    deletedGhosts++;
                 } else {
-                    // Lobby is active. If it is public and it's NOT our own lobby, add it to candidates!
-                    if (session.is_public && session.host_id !== currentUser.id) {
+                    // Valid active lobby!
+                    if (session.is_public && String(session.host_id) !== String(currentUser.id)) {
                         activeSessions.push(session.id);
                     }
                 }
@@ -401,10 +382,20 @@ async function joinGame(type, joinMode, container, currentUser) {
     } else {
         targetSessionId = joinMode;
 
-        // Direct Join: Fast DB State Check (Safeguard 3)
+        // Direct Join: Fast DB State Check
         const { data: sessionData } = await onlineGamesClient.from('game_sessions').select('host_id').eq('id', targetSessionId).single();
         const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', targetSessionId).single();
-        let isGhostByDb = (!sessionData || !st || !st.state_json || !st.state_json.players || st.state_json.players.length === 0 || !st.state_json.players.find(p => p.id === sessionData.host_id));
+
+        let isGhostByDb = false;
+        if (!sessionData || !st || !st.state_json) {
+            isGhostByDb = true;
+        } else {
+            const players = st.state_json.players || [];
+            // Immediate verification
+            if (players.length === 0 || !players.find(p => String(p.id) === String(sessionData.host_id))) {
+                isGhostByDb = true;
+            }
+        }
 
         if (isGhostByDb) {
             await onlineGamesClient.rpc('delete_dead_lobby', { lobby_id: targetSessionId });
@@ -413,20 +404,20 @@ async function joinGame(type, joinMode, container, currentUser) {
             return;
         }
 
-        // Direct Join Ghost Check (Active Realtime Ping)
+        // Direct Join Ghost Check (Active Realtime Ping without last_ping)
         const isGhost = await new Promise((resolve) => {
-            const checkChannel = onlineGamesClient.channel(`game:${targetSessionId}`);
+            const checkChannel = onlineGamesClient.channel(`lobby:${targetSessionId}`);
             let answered = false;
-            checkChannel.on('broadcast', { event: 'ghost_ping_response' }, () => { answered = true; });
+            checkChannel.on('broadcast', { event: 'pong' }, () => { answered = true; });
             checkChannel.subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
-                    checkChannel.send({ type: 'broadcast', event: 'ghost_ping_request', payload: {} });
+                    checkChannel.send({ type: 'broadcast', event: 'ping', payload: {} });
                     setTimeout(() => {
                         checkChannel.unsubscribe();
                         resolve(!answered);
-                    }, 1200);
+                    }, 1000); // Wait 1 second on direct joins
                 } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-                    resolve(true);
+                    resolve(true); // Treat as ghost if unreachable
                 }
             });
         });
@@ -449,6 +440,11 @@ async function joinGame(type, joinMode, container, currentUser) {
     if (error || !session) {
         showModal('Error', 'Game not found. Please check the ID or the host has closed it.');
         return;
+    }
+
+    // Direct joins from URLs won't know the type beforehand. Inject it here.
+    if (!type) {
+        type = session.game_type;
     }
 
     if (session.host_id === currentUser.id) {
@@ -479,27 +475,28 @@ async function joinGame(type, joinMode, container, currentUser) {
 function waitForOpponent(session, type, container, currentUser) {
     const isHost = session.host_id === currentUser.id;
     let players = [];
-    let pollingInterval = null;
 
-    // --- Active Ghost Lobby Responder ---
-    const ghostChannel = onlineGamesClient.channel(`game:${session.id}`);
-    ghostChannel.on('broadcast', { event: 'ghost_ping_request' }, () => {
-        ghostChannel.send({ type: 'broadcast', event: 'ghost_ping_response', payload: {} });
+    // --- Active Ping Responder for the Flawless Ghost Lobby Detection ---
+    const lobbyChannel = onlineGamesClient.channel(`lobby:${session.id}`);
+    lobbyChannel.on('broadcast', { event: 'ping' }, () => {
+        // As long as the user's tab is alive, this reacts instantly.
+        lobbyChannel.send({ type: 'broadcast', event: 'pong', payload: {} });
     }).subscribe();
 
     const cleanupGhostChannel = () => {
-        onlineGamesClient.removeChannel(ghostChannel);
+        onlineGamesClient.removeChannel(lobbyChannel);
     };
-    // ------------------------------------
 
     // Fast tracking cleanup for host closing tab during matchmaking
     const unloadHandler = () => {
         if (isHost) {
             onlineGamesClient.from('game_sessions').delete().eq('id', session.id).then();
         }
-        cleanupGhostChannel();
+        cleanupGhostChannel(); // Immediately disconnect responder if leaving
     };
     window.addEventListener('beforeunload', unloadHandler);
+
+    let pollingInterval = null;
 
     const renderLobby = () => {
         container.innerHTML = `
@@ -507,9 +504,15 @@ function waitForOpponent(session, type, container, currentUser) {
                 <h2 style="font-size: 2rem; margin-bottom: 20px;">Lobby <span style="color: var(--text-secondary); font-size: 1.2rem;">(${players.length}/${session.max_players})</span></h2>
                 <div class="loader" style="border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid var(--accent-red); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 30px auto;"></div>
                 
-                <div style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 8px; display: inline-block;">
-                    <p style="margin: 0;">Game ID: <span style="font-family: monospace; color: var(--accent-red); font-weight: bold; user-select: all; cursor: pointer;" title="Double click to copy">${session.id}</span></p>
-                    ${session.is_public ? '<p style="color: #44ff44; font-size: 0.8rem; margin: 5px 0 0 0;">🌍 Public Matchmaking</p>' : '<p style="color: #ffaa44; font-size: 0.8rem; margin: 5px 0 0 0;">🔒 Private Lobby</p>'}
+                <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; display: inline-block; border: 1px solid rgba(255,255,255,0.05);">
+                    <p style="margin: 0; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        Game ID: <span id="lobby-id-span" style="font-family: monospace; color: var(--accent-red); font-weight: bold; background: rgba(255,50,50,0.1); padding: 2px 8px; border-radius: 4px;">${session.id}</span>
+                        <button id="copy-invite-btn" class="btn btn-ghost" style="padding: 4px 10px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            Copy Invite Link
+                        </button>
+                    </p>
+                    ${session.is_public ? '<p style="color: #44ff44; font-size: 0.8rem; margin: 8px 0 0 0;">🌍 Public Matchmaking</p>' : '<p style="color: #ffaa44; font-size: 0.8rem; margin: 8px 0 0 0;">🔒 Private Lobby</p>'}
                 </div>
 
                 <div style="margin: 30px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
@@ -540,6 +543,24 @@ function waitForOpponent(session, type, container, currentUser) {
             <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
         `;
 
+        // Attach Copy Link Listener
+        const copyBtn = document.getElementById('copy-invite-btn');
+        if (copyBtn) {
+            copyBtn.onclick = () => {
+                const inviteLink = window.location.origin + window.location.pathname + '?invite=' + session.id;
+                navigator.clipboard.writeText(inviteLink).then(() => {
+                    showToast('Invite Link copied to clipboard!');
+                    copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#44ff44" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg> Copy Invite Link';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    showToast('Failed to copy link.');
+                });
+            };
+        }
+
         // Attach Leave Listener
         const leaveBtn = document.getElementById('leave-lobby-btn');
         if (leaveBtn) {
@@ -547,7 +568,6 @@ function waitForOpponent(session, type, container, currentUser) {
                 if (isHost) {
                     await onlineGamesClient.from('game_sessions').delete().eq('id', session.id);
                 } else {
-                    // Guest leaves
                     const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
                     if (st && st.state_json) {
                         const newPlayers = st.state_json.players.filter(p => p.id !== currentUser.id);
@@ -555,29 +575,25 @@ function waitForOpponent(session, type, container, currentUser) {
                     }
                 }
                 clearInterval(pollingInterval);
-                cleanupGhostChannel();
+                cleanupGhostChannel(); // Stop responding to pings
                 location.reload();
             };
         }
 
-        // Attach Start Listener
+        // Attach Start Listener (Initiates DB Handshake)
         const startBtn = document.getElementById('start-game-btn');
         if (startBtn) {
             startBtn.onclick = async () => {
                 startBtn.disabled = true;
-                startBtn.innerText = 'Starting...';
+                startBtn.innerText = 'Synchronizing...';
 
                 await onlineGamesClient.from('game_sessions').update({ status: 'playing' }).eq('id', session.id);
 
-                // Update state block
                 const { data: st } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
                 if (st && st.state_json) {
-                    await onlineGamesClient.from('game_states').update({ state_json: { ...st.state_json, started: true, players } }).eq('session_id', session.id);
+                    // Host sets started=true, guest_ready=false
+                    await onlineGamesClient.from('game_states').update({ state_json: { ...st.state_json, started: true, guest_ready: false, players } }).eq('session_id', session.id);
                 }
-
-                clearInterval(pollingInterval);
-                cleanupGhostChannel();
-                launch(session);
             };
         }
     };
@@ -585,7 +601,6 @@ function waitForOpponent(session, type, container, currentUser) {
     const loadState = async () => {
         const { data, error } = await onlineGamesClient.from('game_states').select('state_json').eq('session_id', session.id).single();
         if (error) {
-            // Session likely deleted by host
             clearInterval(pollingInterval);
             cleanupGhostChannel();
             showModal('Lobby Closed', 'The host has ended the lobby.', [{ text: 'OK', class: 'btn-primary', onClick: () => location.reload() }]);
@@ -596,26 +611,46 @@ function waitForOpponent(session, type, container, currentUser) {
             players = data.state_json.players || [];
 
             if (isHost) {
-                // Host keeps the lobby alive
-                await onlineGamesClient.from('game_states').update({ state_json: { ...data.state_json, last_ping: Date.now() } }).eq('session_id', session.id);
+                // --- DB HANDSHAKE HOST CHECK ---
+                if (data.state_json.started && data.state_json.guest_ready === true) {
+                    if (window.isLaunching) return; window.isLaunching = true;
+                    clearInterval(pollingInterval);
+                    cleanupGhostChannel(); // Time to start game
+                    launch(session);
+                    return;
+                }
             } else {
-                // Ghost Lobby Protection for guests already in lobby
-                const lastPing = data.state_json.last_ping || 0;
-                if (Date.now() - lastPing > 10000) {
+                // Background fallback: Did host suddenly drop out of DB state?
+                if (players.length === 0 || !players.find(p => String(p.id) === String(session.host_id))) {
                     clearInterval(pollingInterval);
                     cleanupGhostChannel();
                     showModal('Lobby Closed', 'The host has disconnected. This lobby is no longer active.', [{ text: 'Leave', class: 'btn-primary', onClick: () => location.reload() }]);
                     return;
                 }
+
+                // --- DB HANDSHAKE GUEST CHECK ---
+                if (data.state_json.started && !data.state_json.guest_ready) {
+                    if (window.isLaunching) return; window.isLaunching = true;
+                    // Guest sees host started the game! Guest immediately marks themselves ready.
+                    await onlineGamesClient.from('game_states').update({ state_json: { ...data.state_json, guest_ready: true } }).eq('session_id', session.id);
+                    clearInterval(pollingInterval);
+                    cleanupGhostChannel();
+                    launch(session);
+                    return;
+                } else if (data.state_json.started && data.state_json.guest_ready) {
+                    if (window.isLaunching) return; window.isLaunching = true;
+                    // Safe fallback if loop fired twice over internet lag
+                    clearInterval(pollingInterval);
+                    cleanupGhostChannel();
+                    launch(session);
+                    return;
+                }
             }
 
-            if (!isHost && data.state_json.started) {
-                clearInterval(pollingInterval);
-                cleanupGhostChannel();
-                launch(session);
-                return;
+            // Only redraw UI if we haven't started transitioning
+            if (!data.state_json.started && !window.isLaunching) {
+                renderLobby();
             }
-            renderLobby();
         }
     };
 
@@ -648,6 +683,7 @@ export function launchOnlineGame(type, container, session, currentUser) {
         }
     });
 
+    // --- NEW SYNC BARRIER ---
     if (type === 'tictactoe') {
         import('./tictactoe.js').then(m => new m.TicTacToe(container, 'online', session, currentUser));
     } else if (type === 'connect4') {

@@ -32,8 +32,22 @@ async function initDashboard() {
     // 2. Setup Navigation
     setupNavigation();
 
-    // 3. Load Default Tab
-    loadTabContent('hub');
+    // 3. Check for Invite Links
+    const urlParams = new URLSearchParams(window.location.search);
+    const inviteCode = urlParams.get('invite');
+
+    if (inviteCode) {
+        // Remove param from URL so it doesn't trigger again on refresh
+        window.history.replaceState({}, document.title, window.location.pathname);
+
+        import('./games.js').then(module => {
+            // We pass null for game type because joinGame will fetch the session details
+            module.joinGame(null, contentArea, currentUser, inviteCode);
+        });
+    } else {
+        // Load Default Tab normally
+        loadTabContent('hub');
+    }
 }
 
 async function loadUserProfile() {
