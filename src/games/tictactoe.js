@@ -1,0 +1,293 @@
+// src/games/tictactoe.js
+// Tic-Tac-Toe with perfect Minimax AI (fixed: proper variable scoping, no cheats)
+
+import { getDisplayName, getUserId } from '../auth.js';
+import { UI_ICONS } from '../ui/icons.js';
+import { showToast } from '../ui/toast.js';
+import { triggerConfetti } from '../ui/animations.js';
+import { ogClient } from '../supabase.js';
+
+export function renderTicTacToe(container, onBack, multiplayer) {
+  let board = Array(9).fill(null);
+  const isMp = !!multiplayer;
+  const isHost = isMp ? multiplayer.isHost : true;
+
+  // In MP, Host is always X initially. Guest is O.
+  // In VS AI, Player is X, AI is O.
+  let playerSymbol = isMp ? (isHost ? 'X' : 'O') : 'X';
+  let opponentSymbol = isMp ? (isHost ? 'O' : 'X') : 'O';
+  let currentTurnSymbol = 'X'; // X always goes first
+
+  let gameOver = false;
+  let aiMovePending = false;
+  let scores = { player: 0, opponent: 0, draws: 0 };
+  let channel = null;
+
+  if (isMp) {
+    // Setup Supabase Realtime for Multiplayer
+    channel = ogClient.channel('game-' + multiplayer.lobby.id);
+    channel.on('broadcast', { event: 'move' }, (payload) => {
+      const { idx, symbol } = payload.payload;
+      if (board[idx] || gameOver) return;
+      board[idx] = symbol;
+      currentTurnSymbol = playerSymbol; // it's our turn now
+      checkEnd();
+      render();
+    }).on('broadcast', { event: 'new_game' }, () => {
+      resetBoard(false); // don't broadcast back
+    }).subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        showToast('Connected to opponent!', 'success');
+      }
+    });
+  }
+
+  function checkEnd() {
+    const result = checkWinner(board);
+    if (result) {
+      gameOver = true;
+      if (result === 'draw') { scores.draws++; showToast('Draw! [DRAW]', 'info'); }
+      else if (result === playerSymbol) { scores.player++; showToast('You win! ★', 'success'); triggerConfetti(); }
+      else { scores.opponent++; showToast(isMp ? 'Opponent wins!' : 'AI wins! [AI]', 'error'); }
+
+      const winLine = getWinLine(board);
+      if (winLine) {
+        const cells = container.querySelectorAll('.ttt-cell');
+        winLine.forEach(i => cells[i]?.classList.add('winner'));
+      }
+      setTimeout(() => {
+        const msg = result === 'draw' ? "Draw! [DRAW]" : result === playerSymbol ? 'You win! ★' : (isMp ? 'Opponent wins!' : 'AI wins! [AI]');
+        showResultCard(container, msg, `Score: You ${scores.player} – ${isMp ? 'Opp' : 'AI'} ${scores.opponent}`, newGame, handleExit);
+      }, 900);
+      return true;
+    }
+    return false;
+  }
+
+  function handleExit() {
+    if (channel) { channel.unsubscribe(); ogClient.removeChannel(channel); }
+    onBack();
+  }
+
+  function render() {
+    const isPlayerTurn = !gameOver && currentTurnSymbol === playerSymbol;
+
+    container.innerHTML = `
+      <div class="game-screen">
+        <div class="game-screen-header">
+          <button class="btn btn-ghost btn-sm" id="back-btn">← Back</button>
+          <div class="game-screen-title">
+            Tic-Tac-Toe
+          <div class="game-screen-badge ${isMp ? 'vs-player' : 'vs-ai'}">${isMp ? 'Multiplayer' : 'VS AI'}</div>
+          </div>
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; padding:24px; gap:20px;">
+          <div class="score-board">
+            <div class="score-item">
+              <div class="score-value player-score">${scores.player}</div>
+              <div class="score-label">You (${playerSymbol})</div>
+            </div>
+            <div class="score-divider">–</div>
+            <div class="score-item">
+              <div class="score-value" style="color:var(--text-muted);">${scores.draws}</div>
+              <div class="score-label">Draws</div>
+            </div>
+            <div class="score-divider">–</div>
+            <div class="score-item">
+              <div class="score-value ai-score">${scores.opponent}</div>
+              <div class="score-label">${isMp ? 'Opponent' : 'AI'} (${opponentSymbol})</div>
+            </div>
+          </div>
+
+          <div class="game-status-bar" style="width:100%;max-width:400px;border-radius:var(--radius-md);">
+            <div class="turn-indicator">
+              <span class="turn-dot ${!isPlayerTurn ? 'ai' : ''}"></span>
+              ${isPlayerTurn ? 'Your turn' : (isMp ? 'Opponent thinking…' : '[AI] AI thinking…')}
+            </div>
+            ${isMp && !isHost ? '' : '<button class="btn btn-ghost btn-sm" id="new-game-btn">New Game</button>'}
+          </div>
+
+          <div class="ttt-board" id="ttt-board">
+            ${board.map((cell, i) => `
+              <div class="ttt-cell ${cell ? 'taken ' + cell.toLowerCase() : ''}" data-idx="${i}">
+                ${cell || ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.querySelector('#back-btn').addEventListener('click', handleExit);
+    if (isMp ? isHost : true) {
+      container.querySelector('#new-game-btn')?.addEventListener('click', newGame);
+    }
+
+    if (isPlayerTurn) {
+      container.querySelectorAll('.ttt-cell:not(.taken)').forEach(cell => {
+        cell.addEventListener('click', () => handlePlayerMove(parseInt(cell.dataset.idx)));
+      });
+    } else if (!gameOver && !isMp && !aiMovePending) {
+      // Only schedule ONE AI move at a time
+      aiMovePending = true;
+      setTimeout(() => { aiMovePending = false; aiMove(); }, 500);
+    }
+  }
+
+  function handlePlayerMove(idx) {
+    if (board[idx] || gameOver || aiMovePending || currentTurnSymbol !== playerSymbol) return;
+    board[idx] = playerSymbol;
+    currentTurnSymbol = opponentSymbol;
+
+    if (isMp && channel) {
+      channel.send({ type: 'broadcast', event: 'move', payload: { idx, symbol: playerSymbol } });
+    }
+
+    if (checkEnd()) return;
+    render();
+  }
+
+  function aiMove() {
+    if (gameOver || isMp) return;
+    const move = minimaxBestMove(board, opponentSymbol, playerSymbol);
+    if (move === -1) return;
+    board[move] = opponentSymbol;
+    currentTurnSymbol = playerSymbol;
+    if (checkEnd()) return;
+    render();
+  }
+
+  function resetBoard(broadcast = false) {
+    board = Array(9).fill(null);
+    gameOver = false;
+    // alternate first move
+    if (!isMp) {
+      [playerSymbol, opponentSymbol] = [opponentSymbol, playerSymbol];
+      currentTurnSymbol = 'X'; // In offline, 'X' always goes first but the symbols swap logically
+      // Wait, standard TTT: whoever is 'X' goes first. If we swapped them, let's just make the AI 'X'
+      currentTurnSymbol = 'X';
+    } else {
+      // In MP, Host is always X, Guest is always O. But they alternate who goes first
+      // Actually simpler: just swap who is X and O for the next round
+      [playerSymbol, opponentSymbol] = [opponentSymbol, playerSymbol];
+      currentTurnSymbol = 'X'; // X always starts
+    }
+
+    if (broadcast && channel) {
+      channel.send({ type: 'broadcast', event: 'new_game' });
+    }
+    render();
+  }
+
+  function newGame() {
+    resetBoard(true);
+  }
+
+  render();
+}
+
+// ─── Perfect Minimax AI (fixed: no implicit globals) ───
+function minimaxBestMove(board, aiSym, playerSym) {
+  let bestScore = -Infinity;
+  let bestMove = -1;
+  for (let i = 0; i < 9; i++) {
+    if (!board[i]) {
+      board[i] = aiSym;
+      const score = minimax(board, false, aiSym, playerSym, 0);
+      board[i] = null;
+      if (score > bestScore) {
+        bestScore = score;
+        bestMove = i;
+      }
+    }
+  }
+  return bestMove;
+}
+
+function minimax(board, isMax, aiSym, playerSym, depth) {
+  const winner = checkWinner(board);
+  if (winner === aiSym) return 10 - depth;
+  if (winner === playerSym) return depth - 10;
+  if (winner === 'draw') return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = aiSym;
+        const s = minimax(board, false, aiSym, playerSym, depth + 1);
+        board[i] = null;
+        best = Math.max(best, s);
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (!board[i]) {
+        board[i] = playerSym;
+        const s = minimax(board, true, aiSym, playerSym, depth + 1);
+        board[i] = null;
+        best = Math.min(best, s);
+      }
+    }
+    return best;
+  }
+}
+
+export function checkWinner(board) {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ];
+  for (const [a, b, c] of lines) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+  }
+  if (board.every(Boolean)) return 'draw';
+  return null;
+}
+
+export function getWinLine(board) {
+  const lines = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6],
+  ];
+  for (const line of lines) {
+    const [a, b, c] = line;
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) return line;
+  }
+  return null;
+}
+
+// ─── Shared result card (used by other games too) ───
+export function showResultCard(container, title, sub, onPlayAgain, onBack) {
+  if (title.toLowerCase().includes('win') && !title.toLowerCase().includes('ai')) {
+    import('../ui/animations.js').then(({ triggerConfetti }) => triggerConfetti());
+  }
+  const existing = container.querySelector('.game-result-overlay');
+  if (existing) existing.remove();
+
+  const gameEl = container.querySelector('.game-screen') || container;
+  gameEl.style.position = 'relative';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'game-result-overlay';
+  overlay.innerHTML = `
+    <div class="game-result-card">
+      <div class="result-title">${title}</div>
+      <div class="result-sub">${sub}</div>
+      <div class="result-actions">
+        <button class="btn btn-primary" id="play-again-btn">Play Again</button>
+        <button class="btn btn-ghost" id="exit-game-btn">Exit</button>
+      </div>
+    </div>
+  `;
+  gameEl.appendChild(overlay);
+  overlay.querySelector('#play-again-btn').addEventListener('click', () => {
+    overlay.remove();
+    onPlayAgain();
+  });
+  overlay.querySelector('#exit-game-btn').addEventListener('click', onBack);
+}
