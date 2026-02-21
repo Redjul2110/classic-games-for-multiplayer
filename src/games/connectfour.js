@@ -4,58 +4,96 @@
 import { showResultCard } from './tictactoe.js';
 import { showToast } from '../ui/toast.js';
 import { triggerConfetti } from '../ui/animations.js';
+import { ogClient } from '../supabase.js';
 
 const ROWS = 6, COLS = 7;
 const PLAYER = 1, AI = 2, EMPTY = 0;
 
-export function renderConnectFour(container, onBack) {
+export function renderConnectFour(container, onBack, multiplayer) {
     let board = createBoard();
+    const isMp = !!multiplayer;
+    const isHost = isMp ? multiplayer.isHost : true;
+
+    // Red goes first (1). In MP, Host is Red. Guest is Yellow. VS AI: Player is Red, AI is Yellow.
+    let myId = isMp ? (isHost ? 1 : 2) : 1;
+    let oppId = isMp ? (isHost ? 2 : 1) : 2;
+    let currentTurnId = 1;
+
     let gameOver = false;
-    let aiMovePending = false; // Added aiMovePending
+    let aiMovePending = false;
     let scores = { player: 0, ai: 0, draws: 0 };
-    let aiThinking = false;
+    let channel = null;
+
+    if (isMp) {
+        channel = ogClient.channel('game-' + multiplayer.lobby.id);
+        channel.on('broadcast', { event: 'move' }, (payload) => {
+            const { col, player } = payload.payload;
+            if (gameOver) return;
+            dropDisc(board, col, player);
+            currentTurnId = myId;
+            const win = checkConnect4Win(board, player);
+            if (win) { render(); highlightWin(win); return endGame(player === myId ? 'player' : 'opponent'); }
+            if (isDraw(board)) { render(); return endGame('draw'); }
+            render();
+        }).on('broadcast', { event: 'new_game' }, () => {
+            resetBoard(false);
+        }).subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                showToast('Connected to opponent!', 'success');
+            }
+        });
+    }
 
     function createBoard() {
         return Array.from({ length: ROWS }, () => Array(COLS).fill(EMPTY));
     }
 
+    function handleExit() {
+        if (channel) { channel.unsubscribe(); ogClient.removeChannel(channel); }
+        onBack();
+    }
+
     function render() {
+        const isPlayerTurn = !gameOver && currentTurnId === myId;
+        const myColor = myId === 1 ? 'Red 🔴' : 'Yellow 🟡';
+        const oppColor = oppId === 1 ? 'Red 🔴' : 'Yellow 🟡';
+
         container.innerHTML = `
       <div class="game-screen">
         <div class="game-screen-header">
           <button class="btn btn-ghost btn-sm" id="back-btn">← Back</button>
-          <div class="game-screen-title">Connect Four <span class="game-screen-badge vs-ai">VS AI</span></div>
+          <div class="game-screen-title">Connect Four <span class="game-screen-badge ${isMp ? 'vs-player' : 'vs-ai'}">${isMp ? 'Multiplayer' : 'VS AI'}</span></div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:20px;gap:16px;">
           <div class="score-board">
-            <div class="score-item"><div class="score-value player-score">${scores.player}</div><div class="score-label">You (Red)</div></div>
+            <div class="score-item"><div class="score-value player-score">${scores.player}</div><div class="score-label">You (${myColor})</div></div>
             <div class="score-divider">–</div>
             <div class="score-item"><div class="score-value" style="color:var(--text-muted)">${scores.draws}</div><div class="score-label">Draws</div></div>
             <div class="score-divider">–</div>
-            <div class="score-item"><div class="score-value ai-score">${scores.ai}</div><div class="score-label">AI 🟡</div></div>
+            <div class="score-item"><div class="score-value ai-score">${scores.ai}</div><div class="score-label">${isMp ? 'Opponent' : 'AI'} (${oppColor})</div></div>
           </div>
           <div style="color:var(--text-secondary);font-size:0.88rem;">
-            ${aiThinking ? '[AI] AI is thinking…' : 'Click a column to drop your disc'}
+            ${isPlayerTurn ? 'Your turn! Click a column to drop your disc.' : (isMp ? 'Opponent is thinking...' : '[AI] AI is thinking…')}
           </div>
           <div class="c4-board" id="c4-board">
             ${board.map((row, r) => `
               <div class="c4-row">
                 ${row.map((cell, c) => `
-                  <div class="c4-cell ${cell === PLAYER ? 'red' : cell === AI ? 'yellow' : ''}"
+                  <div class="c4-cell ${cell === 1 ? 'red' : cell === 2 ? 'yellow' : ''}"
                        data-col="${c}"></div>
                 `).join('')}
               </div>
             `).join('')}
           </div>
-          <button class="btn btn-ghost btn-sm" id="new-game-btn">New Game</button>
+          ${(!isMp || isHost) ? '<button class="btn btn-ghost btn-sm" id="new-game-btn">New Game</button>' : ''}
         </div>
       </div>
     `;
 
-        container.querySelector('#back-btn').addEventListener('click', onBack);
-        container.querySelector('#new-game-btn').addEventListener('click', newGame);
+        container.querySelector('#back-btn').addEventListener('click', handleExit);
+        container.querySelector('#new-game-btn')?.addEventListener('click', newGame);
 
-        if (!aiThinking && !gameOver) {
+        if (isPlayerTurn) {
             container.querySelectorAll('.c4-cell').forEach(cell => {
                 cell.addEventListener('click', () => {
                     handlePlayerMove(parseInt(cell.dataset.col));
@@ -65,24 +103,38 @@ export function renderConnectFour(container, onBack) {
     }
 
     function handlePlayerMove(col) {
-        if (gameOver || aiThinking || aiMovePending) return; // Added aiMovePending check
-        const row = dropDisc(board, col, PLAYER);
+        if (gameOver || currentTurnId !== myId) return;
+        const row = dropDisc(board, col, myId);
         if (row === -1) return; // column full
-        const win = checkConnect4Win(board, PLAYER);
+
+        currentTurnId = oppId;
+
+        if (isMp && channel) {
+            channel.send({ type: 'broadcast', event: 'move', payload: { col, player: myId } });
+        }
+
+        const win = checkConnect4Win(board, myId);
         if (win) { render(); highlightWin(win); return endGame('player'); }
         if (isDraw(board)) { render(); return endGame('draw'); }
-        aiThinking = true;
-        aiMovePending = true; // Set aiMovePending before AI move
+
         render();
-        setTimeout(() => {
-            const aiCol = c4AIMove(board);
-            dropDisc(board, aiCol, AI);
-            const aiWin = checkConnect4Win(board, AI);
-            aiThinking = false;
-            if (aiWin) { render(); highlightWin(aiWin); return endGame('ai'); }
-            if (isDraw(board)) { render(); return endGame('draw'); }
-            render();
-        }, 600);
+
+        if (!isMp && !gameOver) {
+            aiMovePending = true;
+            setTimeout(() => { aiMove(); }, 600);
+        }
+    }
+
+    function aiMove() {
+        if (gameOver || isMp) return;
+        const aiCol = c4AIMove(board);
+        dropDisc(board, aiCol, oppId);
+        currentTurnId = myId;
+        const aiWin = checkConnect4Win(board, oppId);
+        aiMovePending = false;
+        if (aiWin) { render(); highlightWin(aiWin); return endGame('ai'); }
+        if (isDraw(board)) { render(); return endGame('draw'); }
+        render();
     }
 
     function highlightWin(cells) {
@@ -96,17 +148,30 @@ export function renderConnectFour(container, onBack) {
     function endGame(result) {
         gameOver = true;
         if (result === 'player') { scores.player++; showToast('You win! ★', 'success'); triggerConfetti(); }
-        else if (result === 'ai') { scores.ai++; showToast('AI wins! [AI]', 'error'); }
+        else if (result === 'opponent' || result === 'ai') { scores.ai++; showToast(isMp ? 'Opponent wins!' : 'AI wins! [AI]', 'error'); }
         else { scores.draws++; showToast("It's a draw!", 'info'); }
 
-        const title = result === 'player' ? 'You Win! ★' : result === 'ai' ? 'AI Wins! [AI]' : 'Draw! [DRAW]';
-        const sub = `Score: You ${scores.player} – AI ${scores.ai}`;
-        setTimeout(() => showResultCard(container, title, sub, newGame, onBack), 1200);
+        const title = result === 'player' ? 'You Win! ★' : (isMp ? 'Opponent Wins!' : 'AI Wins! [AI]');
+        const sub = `Score: You ${scores.player} – ${isMp ? 'Opp' : 'AI'} ${scores.ai}`;
+        setTimeout(() => showResultCard(container, title, sub, newGame, handleExit), 1200);
+    }
+
+    function resetBoard(broadcast = false) {
+        board = createBoard();
+        gameOver = false;
+        aiMovePending = false;
+        currentTurnId = 1;
+
+        if (broadcast && channel) {
+            channel.send({ type: 'broadcast', event: 'new_game' });
+        }
+        render();
     }
 
     function newGame() {
-        board = createBoard(); gameOver = false; aiThinking = false; render();
+        resetBoard(true);
     }
+
     render();
 }
 

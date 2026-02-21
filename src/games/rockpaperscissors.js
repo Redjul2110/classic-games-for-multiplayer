@@ -3,11 +3,16 @@
 
 import { showToast } from '../ui/toast.js';
 import { getDisplayName } from '../auth.js';
+import { triggerConfetti } from '../ui/animations.js';
+import { ogClient } from '../supabase.js';
 
-const CHOICES = ['[ROCK]', '[PAPER]', '[SCISSORS]'];
+const CHOICES = ['🪨', '📄', '✂️'];
 const CHOICE_NAMES = ['Rock', 'Paper', 'Scissors'];
 
-export function renderRPS(container, onBack) {
+export function renderRPS(container, onBack, multiplayer) {
+  const isMp = !!multiplayer;
+  const isHost = isMp ? multiplayer.isHost : true;
+
   let scores = { player: 0, ai: 0, draws: 0 };
   let round = 1;
   const maxRounds = 5;
@@ -18,13 +23,79 @@ export function renderRPS(container, onBack) {
   let lastAiChoice = null;
   let aiThinking = false;
 
+  // MP State
+  let myChoice = null;
+  let oppChoice = null;
+  let channel = null;
+  let roundResolved = false;
+
+  if (isMp) {
+    channel = ogClient.channel('game-' + multiplayer.lobby.id);
+    channel.on('broadcast', { event: 'choice' }, (payload) => {
+      oppChoice = payload.payload.choice;
+      checkRoundResolution();
+    }).on('broadcast', { event: 'rematch' }, () => {
+      resetGame(false);
+    }).subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        showToast('Connected to opponent!', 'success');
+      }
+    });
+  }
+
+  function checkRoundResolution() {
+    if (myChoice !== null && oppChoice !== null && !roundResolved) {
+      roundResolved = true;
+      aiThinking = false;
+
+      lastPlayerChoice = myChoice;
+      lastAiChoice = oppChoice;
+
+      const result = getRPSResult(myChoice, oppChoice);
+      lastResult = result;
+
+      if (result === 'player') scores.player++;
+      else if (result === 'ai') scores.ai++;
+      else scores.draws++;
+
+      round++;
+
+      if (round > maxRounds || scores.player === 3 || scores.ai === 3) {
+        gameOver = true;
+        if (scores.player > scores.ai) triggerConfetti();
+      }
+
+      render();
+
+      if (!gameOver) {
+        setTimeout(() => {
+          myChoice = null;
+          oppChoice = null;
+          roundResolved = false;
+          lastPlayerChoice = null;
+          lastAiChoice = null;
+          lastResult = null;
+          render();
+        }, 2000);
+      }
+    } else if (isMp && myChoice !== null && oppChoice === null) {
+      aiThinking = true;
+      render();
+    }
+  }
+
+  function handleExit() {
+    if (channel) { channel.unsubscribe(); ogClient.removeChannel(channel); }
+    onBack();
+  }
+
   function render() {
     container.innerHTML = `
       <div class="game-screen">
         <div class="game-screen-header">
           <button class="btn btn-ghost btn-sm" id="back-btn">← Back</button>
           <div class="game-screen-title">
-            Rock Paper Scissors <span class="game-screen-badge vs-ai">VS AI</span>
+            Rock Paper Scissors <span class="game-screen-badge ${isMp ? 'vs-player' : 'vs-ai'}">${isMp ? 'Multiplayer' : 'VS AI'}</span>
           </div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:24px;gap:20px;">
@@ -36,7 +107,7 @@ export function renderRPS(container, onBack) {
             <div class="score-divider">${round <= maxRounds ? `Round ${round}/${maxRounds}` : 'Final'}</div>
             <div class="score-item">
               <div class="score-value ai-score">${scores.ai}</div>
-              <div class="score-label">AI [AI]</div>
+              <div class="score-label">${isMp ? 'Opponent' : 'AI 🤖'}</div>
             </div>
           </div>
 
@@ -46,8 +117,8 @@ export function renderRPS(container, onBack) {
                 ${lastPlayerChoice !== null ? CHOICES[lastPlayerChoice] : '?'}
               </div>
               <div style="font-weight:700;font-size:0.9rem;">You</div>
-              ${lastResult ? `<div style="font-size:0.82rem;color:${lastResult === 'player' ? '#2ecc71' : lastResult === 'ai' ? 'var(--red-light)' : 'var(--text-muted)'}";>
-                ${lastResult === 'player' ? '[*] Win!' : lastResult === 'ai' ? '[X] Loss' : '[DRAW] Tie'}
+              ${lastResult ? `<div style="font-size:0.82rem;color:${lastResult === 'player' ? '#2ecc71' : lastResult === 'ai' ? 'var(--red-light)' : 'var(--text-muted)'}">
+                ${lastResult === 'player' ? '⭐ Win!' : lastResult === 'ai' ? '❌ Loss' : '🤝 Tie'}
               </div>` : ''}
             </div>
             <div class="rps-vs">VS</div>
@@ -55,13 +126,13 @@ export function renderRPS(container, onBack) {
               <div class="rps-choice-display ai" id="ai-display">
                 ${lastAiChoice !== null ? CHOICES[lastAiChoice] : '?'}
               </div>
-              <div style="font-weight:700;font-size:0.9rem;">AI [AI]</div>
+              <div style="font-weight:700;font-size:0.9rem;">${isMp ? 'Opponent' : 'AI 🤖'}</div>
             </div>
           </div>
 
           ${!gameOver ? `
             <div style="text-align:center;color:var(--text-secondary);font-size:0.9rem;margin-bottom:4px;">
-              ${aiThinking ? '[AI] AI is reading your patterns…' : 'Make your choice:'}
+              ${aiThinking ? (isMp ? '⏳ Waiting for opponent…' : '🤖 AI is reading your patterns…') : 'Make your choice:'}
             </div>
             <div class="rps-choices">
               ${CHOICES.map((emoji, i) => `
@@ -74,7 +145,7 @@ export function renderRPS(container, onBack) {
           ` : `
             <div style="text-align:center;margin-top:12px;">
               <div style="font-size:1.5rem;font-weight:900;margin-bottom:8px;">
-                ${scores.player > scores.ai ? '★ You Win the Match!' : scores.ai > scores.player ? '[AI] AI Wins the Match!' : '[DRAW] Match Drawn!'}
+                ${scores.player > scores.ai ? '⭐ You Win the Match!' : scores.ai > scores.player ? (isMp ? '😔 Opponent Wins!' : '🤖 AI Wins the Match!') : '🤝 Match Drawn!'}
               </div>
               <div style="color:var(--text-secondary);margin-bottom:20px;">Final: ${scores.player} – ${scores.ai}</div>
               <div style="display:flex;gap:12px;justify-content:center;">
@@ -100,38 +171,54 @@ export function renderRPS(container, onBack) {
 
   function playRound(playerChoice) {
     if (aiThinking || gameOver) return;
-    aiThinking = true;
-    lastPlayerChoice = playerChoice;
-    render();
 
-    setTimeout(() => {
-      const aiChoice = markovAIChoice(playerHistory);
-      lastAiChoice = aiChoice;
-
-      const result = getRPSResult(playerChoice, aiChoice);
-      lastResult = result;
-
-      if (result === 'player') scores.player++;
-      else if (result === 'ai') scores.ai++;
-      else scores.draws++;
-
-      playerHistory.push(playerChoice);
-
-      round++;
-      aiThinking = false;
-
-      if (round > maxRounds || scores.player === 3 || scores.ai === 3) {
-        gameOver = true;
-      }
+    if (isMp) {
+      myChoice = playerChoice;
+      aiThinking = true;
       render();
-    }, 700);
+      if (channel) {
+        channel.send({ type: 'broadcast', event: 'choice', payload: { choice: playerChoice } });
+      }
+      checkRoundResolution();
+    } else {
+      aiThinking = true;
+      lastPlayerChoice = playerChoice;
+      render();
+
+      setTimeout(() => {
+        const aiChoice = markovAIChoice(playerHistory);
+        lastAiChoice = aiChoice;
+
+        const result = getRPSResult(playerChoice, aiChoice);
+        lastResult = result;
+
+        if (result === 'player') scores.player++;
+        else if (result === 'ai') scores.ai++;
+        else scores.draws++;
+
+        playerHistory.push(playerChoice);
+
+        round++;
+        aiThinking = false;
+
+        if (round > maxRounds || scores.player === 3 || scores.ai === 3) {
+          gameOver = true;
+          if (scores.player > scores.ai) triggerConfetti();
+        }
+        render();
+      }, 700);
+    }
   }
 
-  function resetGame() {
+  function resetGame(broadcast = true) {
     scores = { player: 0, ai: 0, draws: 0 };
     round = 1; gameOver = false; aiThinking = false;
     playerHistory = []; lastResult = null;
     lastPlayerChoice = null; lastAiChoice = null;
+    myChoice = null; oppChoice = null; roundResolved = false;
+    if (isMp && broadcast && channel) {
+      channel.send({ type: 'broadcast', event: 'rematch' });
+    }
     render();
   }
 

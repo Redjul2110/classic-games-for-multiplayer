@@ -4,6 +4,8 @@
 
 import { showToast } from '../ui/toast.js';
 import { showResultCard } from './tictactoe.js';
+import { triggerConfetti } from '../ui/animations.js';
+import { ogClient } from '../supabase.js';
 
 // Board: row 0 = top (black home), row 7 = bottom (white home)
 // Uppercase = white, lowercase = black
@@ -231,42 +233,69 @@ function getBestMove(board, color, depth) {
 }
 
 // ─── UI ───
-export function renderChess(container, onBack) {
+export function renderChess(container, onBack, multiplayer) {
     let board = INIT_BOARD();
+
+    const isMp = !!multiplayer;
+    const isHost = isMp ? multiplayer.isHost : true;
+    const myColor = isMp ? (isHost ? 'white' : 'black') : 'white';
+    const oppColor = isMp ? (isHost ? 'black' : 'white') : 'black';
+
     let selected = null;
     let validMoves = [];
-    let turn = 'white'; // human = white
+    let turn = 'white'; // white always starts
     let gameOver = false;
     let aiThinking = false;
     let lastMove = null;
     let scores = { player: 0, ai: 0 };
     let checkMsg = '';
+    let channel = null;
+
+    if (isMp) {
+        channel = ogClient.channel('game-' + multiplayer.lobby.id);
+        channel.on('broadcast', { event: 'move' }, (payload) => {
+            const { move, color } = payload.payload;
+            if (gameOver) return;
+            executeMove(move, color, true);
+        }).on('broadcast', { event: 'new_game' }, () => {
+            resetGame(false);
+        }).subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                showToast('Connected to opponent!', 'success');
+            }
+        });
+    }
+
+    function handleExit() {
+        if (channel) { channel.unsubscribe(); ogClient.removeChannel(channel); }
+        onBack();
+    }
 
     function render() {
         container.innerHTML = `
       <div class="game-screen">
         <div class="game-screen-header">
           <button class="btn btn-ghost btn-sm" id="back-btn">← Back</button>
-          <div class="game-screen-title">Chess <span class="game-screen-badge vs-ai">VS AI</span></div>
+          <div class="game-screen-title">Chess <span class="game-screen-badge ${isMp ? 'vs-player' : 'vs-ai'}">${isMp ? 'Multiplayer' : 'VS AI'}</span></div>
         </div>
         <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:16px;gap:10px;">
           <div class="score-board">
-            <div class="score-item"><div class="score-value player-score">${scores.player}</div><div class="score-label">You ♔</div></div>
+            <div class="score-item"><div class="score-value player-score">${scores.player}</div><div class="score-label">You ${myColor === 'white' ? '♔' : '♚'}</div></div>
             <div class="score-divider">|</div>
-            <div class="score-item"><div class="score-value ai-score">${scores.ai}</div><div class="score-label">AI ♚</div></div>
+            <div class="score-item"><div class="score-value ai-score">${scores.ai}</div><div class="score-label">${isMp ? 'Opponent' : 'AI'} ${oppColor === 'white' ? '♔' : '♚'}</div></div>
           </div>
           <div style="font-size:0.88rem;font-weight:700;color:${checkMsg.includes('Check') ? 'var(--red-light)' : 'var(--text-secondary)'};">
-            ${aiThinking ? '[AI] AI is thinking…' : gameOver ? '♟️ Game Over' : checkMsg || (turn === 'white' ? '♔ Your turn' : '♚ AI\'s turn')}
+            ${aiThinking ? '[AI] AI is thinking…' : gameOver ? '♟️ Game Over' : checkMsg || (turn === myColor ? (myColor === 'white' ? '♔' : '♚') + ' Your turn' : (isMp ? 'Opponent is thinking...' : '♚ AI is playing...'))}
           </div>
           <div class="chess-board" id="chess-board">${renderBoard()}</div>
-          <button class="btn btn-ghost btn-sm" id="new-game-btn">New Game</button>
+          ${(!isMp || isHost) ? '<button class="btn btn-ghost btn-sm" id="new-game-btn">New Game</button>' : ''}
         </div>
       </div>
     `;
-        container.querySelector('#back-btn').addEventListener('click', onBack);
-        container.querySelector('#new-game-btn').addEventListener('click', resetGame);
+        container.querySelector('#back-btn').addEventListener('click', handleExit);
+        container.querySelector('#new-game-btn')?.addEventListener('click', () => resetGame(true));
 
-        if (!aiThinking && !gameOver && turn === 'white') {
+        if (!aiThinking && !gameOver && turn === myColor) {
             container.querySelectorAll('.chess-cell').forEach(cell => {
                 cell.addEventListener('click', () => handleClick(+cell.dataset.r, +cell.dataset.c));
             });
@@ -275,8 +304,10 @@ export function renderChess(container, onBack) {
 
     function renderBoard() {
         let html = '';
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
+        for (let rowIdx = 0; rowIdx < 8; rowIdx++) {
+            const r = myColor === 'black' ? 7 - rowIdx : rowIdx;
+            for (let colIdx = 0; colIdx < 8; colIdx++) {
+                const c = myColor === 'black' ? 7 - colIdx : colIdx;
                 const light = (r + c) % 2 === 0;
                 const piece = board[r][c];
                 const isSel = selected && selected[0] === r && selected[1] === c;
@@ -293,30 +324,34 @@ export function renderChess(container, onBack) {
     }
 
     function handleClick(r, c) {
-        if (turn !== 'white' || aiThinking || gameOver) return;
+        if (turn !== myColor || aiThinking || gameOver) return;
 
         if (selected) {
             const move = validMoves.find(m => m[2] === r && m[3] === c);
             if (move) {
-                executeMove(move, 'white');
+                executeMove(move, myColor);
                 return;
             }
             // Deselect
             selected = null; validMoves = [];
         }
 
-        if (board[r][c] && colorOf(board[r][c]) === 'white') {
+        if (board[r][c] && colorOf(board[r][c]) === myColor) {
             selected = [r, c];
-            validMoves = getLegalMoves(board, r, c, 'white');
+            validMoves = getLegalMoves(board, r, c, myColor);
         }
         render();
     }
 
-    function executeMove(move, color) {
+    function executeMove(move, color, fromNetwork = false) {
         lastMove = [[move[0], move[1]], [move[2], move[3]]];
         board = applyMove(board, move);
         selected = null; validMoves = [];
         checkMsg = '';
+
+        if (isMp && !fromNetwork && channel) {
+            channel.send({ type: 'broadcast', event: 'move', payload: { move, color } });
+        }
 
         // Check for game end
         const opp = opponent(color);
@@ -325,30 +360,34 @@ export function renderChess(container, onBack) {
             gameOver = true;
             if (isInCheck(board, opp)) {
                 // Checkmate
-                const winner = color === 'white' ? 'player' : 'ai';
+                const winner = color === myColor ? 'player' : (isMp ? 'opponent' : 'ai');
                 if (winner === 'player') scores.player++; else scores.ai++;
                 render();
-                const msg = winner === 'player' ? 'Checkmate! You Win! ♔' : 'Checkmate! AI Wins! ♚';
+
+                const msg = winner === 'player' ? 'Checkmate! You Win! ♔' : (isMp ? 'Checkmate! Opponent Wins! ♚' : 'Checkmate! AI Wins! ♚');
                 const toast = winner === 'player' ? 'success' : 'error';
                 showToast(msg, toast);
+
                 if (winner === 'player') triggerConfetti();
                 setTimeout(() => showResultCard(container, msg,
-                    `Score: You ${scores.player} – AI ${scores.ai}`, resetGame, onBack), 800);
+                    `Score: You ${scores.player} – ${isMp ? 'Opp' : 'AI'} ${scores.ai}`, () => resetGame(true), handleExit), 800);
             } else {
                 render();
                 showToast('Stalemate — Draw!', 'info');
                 setTimeout(() => showResultCard(container, 'Stalemate! [DRAW]',
-                    'Neither player can move.', resetGame, onBack), 800);
+                    'Neither player can move.', () => resetGame(true), handleExit), 800);
             }
             return;
         }
         // Report check
-        if (isInCheck(board, opp)) checkMsg = opp === 'white' ? '[!] You are in Check!' : '[!] AI is in Check!';
+        if (isInCheck(board, opp)) {
+            checkMsg = opp === myColor ? '[!] You are in Check!' : (isMp ? '[!] Opponent in Check!' : '[!] AI is in Check!');
+        }
 
         turn = opp;
         render();
 
-        if (turn === 'black' && !aiThinking) {
+        if (!isMp && turn === 'black' && !aiThinking) {
             aiThinking = true;
             render();
             setTimeout(() => {
@@ -363,11 +402,14 @@ export function renderChess(container, onBack) {
         }
     }
 
-    function resetGame() {
+    function resetGame(broadcast = true) {
         board = INIT_BOARD();
         selected = null; validMoves = [];
         turn = 'white'; gameOver = false; aiThinking = false;
         lastMove = null; checkMsg = '';
+        if (isMp && broadcast && channel) {
+            channel.send({ type: 'broadcast', event: 'new_game' });
+        }
         render();
     }
 
